@@ -226,7 +226,6 @@ cb = CatboostWrapper(clf= CatBoostClassifier, seed = SEED, params=catboost_param
 lg = LightGBMWrapper(clf = LGBMClassifier, seed = SEED, params = lightgbm_params)
 
 xg_oof_train, xg_oof_test = get_oof(xg)
-'''
 et_oof_train, et_oof_test = get_oof(et)
 rf_oof_train, rf_oof_test = get_oof(rf)
 cb_oof_train, cb_oof_test = get_oof(cb)
@@ -236,7 +235,7 @@ print("ET-CV: {}".format(sqrt(mean_squared_error(y_train, et_oof_train))))
 print("RF-CV: {}".format(sqrt(mean_squared_error(y_train, rf_oof_train))))
 print("RF-CV: {}".format(sqrt(mean_squared_error(y_train, cb_oof_train))))
 
-
+'''
 x_train = np.concatenate((xg_oof_train, et_oof_train, rf_oof_train, cb_oof_train), axis=1)
 x_test = np.concatenate((xg_oof_test, et_oof_test, rf_oof_test, cb_oof_test), axis=1)
 
