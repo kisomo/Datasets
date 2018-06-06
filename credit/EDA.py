@@ -56,45 +56,47 @@ print('Size of previous_application data', previous_application.shape)
 print('Size of installments_payments data', installments_payments.shape)
 print('Size of credit_card_balance data', credit_card_balance.shape)
 print('Size of bureau data', bureau.shape)
+print('Size of test data', application_test.shape)
 
 
-application_train.head()
+print(application_train.head(5))
 
-'''
-application_train.columns.values
+print(application_train.columns.values)
 
-POS_CASH_balance.head()
+print(POS_CASH_balance.head(5))
 
-bureau_balance.head()
+print(bureau_balance.head(5))
 
-previous_application.head()
+print(previous_application.head())
 
-previous_application.columns.values
+print(previous_application.columns.values)
 
-installments_payments.head()
+print(installments_payments.head(5))
 
-credit_card_balance.head()
+print(credit_card_balance.head(5))
 
-credit_card_balance.columns.values
+print(credit_card_balance.columns.values)
 
-bureau.head()
+print(bureau.head(5))
+
+print(application_test.head(5))
 
 #+++++++++++++++ check for missing data
 
-# checking missing data
+print("++++++++++ checking train data +++++++++++++++++++++")
 total = application_train.isnull().sum().sort_values(ascending = False)
+print(total)
 percent = (application_train.isnull().sum()/application_train.isnull().count()*100).sort_values(ascending = False)
+print(percent)
 missing_application_train_data  = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-missing_application_train_data.head(20)
-
+print(missing_application_train_data.head(20))
 
 
 # checking missing data
 total = POS_CASH_balance.isnull().sum().sort_values(ascending = False)
 percent = (POS_CASH_balance.isnull().sum()/POS_CASH_balance.isnull().count()*100).sort_values(ascending = False)
 missing_POS_CASH_balance_data  = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-missing_POS_CASH_balance_data.head(3)
-
+print(missing_POS_CASH_balance_data.head(3))
 
 
 
@@ -102,15 +104,14 @@ missing_POS_CASH_balance_data.head(3)
 total = bureau_balance.isnull().sum().sort_values(ascending = False)
 percent = (bureau_balance.isnull().sum()/bureau_balance.isnull().count()*100).sort_values(ascending = False)
 missing_bureau_balance_data  = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-missing_bureau_balance_data.head(3)
-
+print(missing_bureau_balance_data.head(3))
 
 
 # checking missing data
 total = previous_application.isnull().sum().sort_values(ascending = False)
 percent = (previous_application.isnull().sum()/previous_application.isnull().count()*100).sort_values(ascending = False)
 missing_previous_application_data  = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-missing_previous_application_data.head(15)
+print(missing_previous_application_data.head(5))
 
 
 
@@ -118,7 +119,7 @@ missing_previous_application_data.head(15)
 total = installments_payments.isnull().sum().sort_values(ascending = False)
 percent = (installments_payments.isnull().sum()/installments_payments.isnull().count()*100).sort_values(ascending = False)
 missing_installments_payments_data  = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-missing_installments_payments_data.head(3)
+print(missing_installments_payments_data.head(3))
 
 
 
@@ -126,7 +127,7 @@ missing_installments_payments_data.head(3)
 total = credit_card_balance.isnull().sum().sort_values(ascending = False)
 percent = (credit_card_balance.isnull().sum()/credit_card_balance.isnull().count()*100).sort_values(ascending = False)
 missing_credit_card_balance_data  = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-missing_credit_card_balance_data.head(10)
+print(missing_credit_card_balance_data.head(10))
 
 
 
@@ -134,7 +135,7 @@ missing_credit_card_balance_data.head(10)
 total = bureau.isnull().sum().sort_values(ascending = False)
 percent = (bureau.isnull().sum()/bureau.isnull().count()*100).sort_values(ascending = False)
 missing_bureau_data  = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-missing_bureau_data.head(8)
+print(missing_bureau_data.head(8))
 
 
 #++++++++++++++++++++++++ Exploration +++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -144,7 +145,7 @@ plt.title("Distribution of AMT_CREDIT")
 ax = sns.distplot(application_train["AMT_CREDIT"])
 plt.show()
 
-
+'''
 
 plt.figure(figsize=(12,5))
 plt.title("Distribution of AMT_INCOME_TOTAL")
@@ -917,7 +918,8 @@ temp = previous_application["NAME_PORTFOLIO"].value_counts()
 df = pd.DataFrame({'labels': temp.index,
                    'values': temp.values
                   })
-df.iplot(kind='pie',labels='labels',values='values', title='Was the previous application for CASH, POS, CAR, …', hole = 0.7,colors=['#ea7c96','#75e575',])
+df.iplot(kind='pie',labels='labels',values='values',
+ title='Was the previous application for CASH, POS, CAR,etc', hole = 0.7,colors=['#ea7c96','#75e575',])
 
 
 
