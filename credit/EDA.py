@@ -60,6 +60,7 @@ print('Size of bureau data', bureau.shape)
 
 application_train.head()
 
+'''
 application_train.columns.values
 
 POS_CASH_balance.head()
@@ -1150,11 +1151,4 @@ fig1 = go.Figure(data=[trace2])
 fig1['layout'].update(layout)
 py.iplot(fig1, filename='plots')
 
-
-
-
-
-
-
-
-
+'''
