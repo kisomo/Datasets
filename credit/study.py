@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-'''
+
 #https://www.analyticsvidhya.com/blog/2017/08/catboost-automated-categorical-data/
 
 
@@ -24,7 +24,6 @@ print(test.head(1))
 
 print(train.shape)
 print(test.shape)
-
 
 from catboost import CatBoostRegressor
 
@@ -52,7 +51,7 @@ X_train, X_validation, y_train, y_validation = train_test_split(X, y, train_size
 print(X.dtypes)
 
 categorical_features_indices = np.where(X.dtypes != np.float)[0]
-
+'''
 #importing library and building model
 from catboost import CatBoostRegressor
 model=CatBoostRegressor(iterations=50, depth=3, learning_rate=0.1, loss_function='RMSE')
@@ -80,7 +79,7 @@ test_set = pd.read_csv("adult.test.txt",header=None,names=colnames,na_values='?'
 
 print(train_set.shape)
 print(test_set.shape)
-
+print(train_set.head(3))
 
 # convert categorical columns to integers
 category_cols = ['wc','ed','ms','occ','rel','race','sex','nc','label']
@@ -88,20 +87,25 @@ for header in category_cols:
     train_set[header] = train_set[header].astype('category').cat.codes
     test_set[header] = test_set[header].astype('category').cat.codes
 
+
 # split labels out of data sets    
 train_label = train_set['label']
 train_set = train_set.drop('label', axis=1) # remove labels
 test_label = test_set['label']
 test_set = test_set.drop('label', axis=1) # remove labels
 
+
 # train default classifier    
-clf = cb.CatBoostClassifier()
-cat_dims = [train_set.columns.get_loc(i) for i in category_cols[:-1]] 
-clf.fit(train_set, np.ravel(train_label), cat_features=cat_dims)
-res = clf.predict(test_set)
-print('error:',1-np.mean(res==np.ravel(test_label)))
+#clf = cb.CatBoostClassifier()
+#cat_dims = [train_set.columns.get_loc(i) for i in category_cols[:-1]] 
+#print(cat_dims)
+
+#clf.fit(train_set, np.ravel(train_label), cat_features=cat_dims)
+#res = clf.predict(test_set)
+#print('error:',1-np.mean(res==np.ravel(test_label)))
 '''
 
+'''
 import pandas
 import numpy as np
 import catboost as cb
@@ -135,7 +139,7 @@ params = {'depth':[3,1,2,6,4,5,7,8,9,10],
           'l2_leaf_reg':[3,1,5,10,100],
           'border_count':[32,5,10,20,50,100,200],
           'ctr_border_count':[50,5,10,20,100,200],
-          'thread_count':4}
+          'thread_count':-1}
 
 
 
@@ -156,7 +160,10 @@ def crossvaltest(params,train_set,train_label,cat_dims,n_splits=3):
         res.append(np.mean(clf.predict(test)==np.ravel(test_labels)))
     return np.mean(res)
 
-'''
+
+###Terrence = crossvaltest(params,train_set,train_label,cat_dims,n_splits=3)
+###print(Terrence)
+
 
 # this function runs grid search on several parameters
 def catboost_param_tune(params,train_set,train_label,cat_dims=None,n_splits=3):
@@ -171,7 +178,8 @@ def catboost_param_tune(params,train_set,train_label,cat_dims=None,n_splits=3):
         res = crossvaltest(prms,train_set,train_label,cat_dims,n_splits)
         # save the crossvalidation result so that future iterations can reuse the best parameters
         ps.register_result(res,prms)
-        print(res,prms,s'best:',ps.bestscore(),ps.bestparam())
+        #print(res,prms,s'best:',ps.bestscore(),ps.bestparam())
+        print(res,prms,'best:',ps.bestscore(),ps.bestparam())
     return ps.bestparam()
 
 bestparams = catboost_param_tune(params,train_set,train_label,cat_dims)
@@ -185,35 +193,6 @@ res = clf.predict(test_set)
 print('error:',1-np.mean(res==np.ravel(test_label)))
 
 '''
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
