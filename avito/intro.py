@@ -24,16 +24,21 @@ from sklearn import preprocessing
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+'''
 print("\nData Load Stage")
-#training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
-#traindex = training.index
+training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
+traindex = training.index
+#print(traindex)
 testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
 testdex = testing.index
-'''
+#print(testdex)
+
 y = training.deal_probability.copy()
 training.drop("deal_probability",axis=1, inplace=True)
 print('Train shape: {} Rows, {} Columns'.format(*training.shape))
 print('Test shape: {} Rows, {} Columns'.format(*testing.shape))
+#print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+#print(training.head(1))
 
 
 # Combine Train and Test
@@ -54,17 +59,24 @@ df["Day of Month"] = df['activation_date'].dt.day
 
 # Remove Dead Variables
 df.drop(["activation_date","image"],axis=1,inplace=True)
+print(df.shape)
+print(df.head(2))
+print(df.dtypes)
+
 
 print("\nEncode Variables")
 categorical = ["user_id","region","city","parent_category_name","category_name","item_seq_number","user_type","image_top_1"]
 messy_categorical = ["param_1","param_2","param_3","title","description"] # Need to find better technique for these
 print("Encoding :",categorical + messy_categorical)
 
+
 # Encoder:
 lbl = preprocessing.LabelEncoder()
 for col in categorical + messy_categorical:
     df[col] = lbl.fit_transform(df[col].astype(str))
-    
+
+print(df.head(2))
+   
 print("\nCatboost Modeling Stage")
 X = df.loc[traindex,:].copy()
 print("Training Set shape",X.shape)
@@ -72,6 +84,7 @@ test = df.loc[testdex,:].copy()
 print("Submission Set Shape: {} Rows, {} Columns".format(*test.shape))
 del df
 gc.collect()
+
 
 # Training and Validation Set
 X_train, X_valid, y_train, y_valid = train_test_split(
@@ -84,10 +97,11 @@ def column_index(df, query_cols):
     return sidx[np.searchsorted(cols,query_cols,sorter=sidx)]
 categorical_features_pos = column_index(X,categorical + messy_categorical)
 
+
 # Train Model
 print("Train CatBoost Decision Tree")
 modelstart= time.time()
-cb_model = CatBoostRegressor(iterations=700,
+cb_model = CatBoostRegressor(iterations=7,
                              learning_rate=0.02,
                              depth=12,
                              eval_metric='RMSE',
@@ -95,7 +109,7 @@ cb_model = CatBoostRegressor(iterations=700,
                              bagging_temperature = 0.2,
                              od_type='Iter',
                              metric_period = 75,
-                             od_wait=100)
+                             od_wait=10)
 cb_model.fit(X_train, y_train,
              eval_set=(X_valid,y_valid),
              cat_features=categorical_features_pos,
@@ -119,3 +133,215 @@ print("Model Runtime: %0.2f Minutes"%((time.time() - modelstart)/60))
 print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 '''
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++ FastText +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#https://www.kaggle.com/christofhenkel/fasttext-starter-description-only/code
+
+import pandas as pd
+from keras.preprocessing import text, sequence
+import numpy as np
+from tqdm import tqdm
+from keras.layers import Input, SpatialDropout1D,Dropout, GlobalAveragePooling1D, CuDNNGRU, Bidirectional, Dense, Embedding
+from keras.models import Model
+from keras.optimizers import Adam
+from keras.callbacks import ModelCheckpoint
+import keras.backend as K
+import numpy as np
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+import os
+
+
+EMBEDDING_FILE = '/home/terrence/CODING/Python/MODELS/AvitoData/cc.ru.300.vec'
+TRAIN_CSV = '/home/terrence/CODING/Python/MODELS/AvitoData/train.csv'
+TEST_CSV = '/home/terrence/CODING/Python/MODELS/AvitoData/test.csv'
+
+
+max_features = 100000
+maxlen = 100
+embed_size = 300
+
+train = pd.read_csv(TRAIN_CSV, index_col = 0)
+print(train.shape)
+print(train.head(2))
+labels = train[['deal_probability']].copy()
+train = train[['description']].copy()
+
+tokenizer = text.Tokenizer(num_words=max_features)
+print('fitting tokenizer')
+
+
+train['description'] = train['description'].astype(str)
+tokenizer.fit_on_texts(list(train['description'].fillna('NA').values))
+
+
+print('getting embeddings')
+def get_coefs(word, *arr): return word, np.asarray(arr, dtype='float32')
+embeddings_index = dict(get_coefs(*o.rstrip().rsplit(' ')) for o in tqdm(open(EMBEDDING_FILE)))
+
+word_index = tokenizer.word_index
+nb_words = min(max_features, len(word_index))
+embedding_matrix = np.zeros((nb_words, embed_size))
+for word, i in tqdm(word_index.items()):
+    if i >= max_features: continue
+    embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None: embedding_matrix[i] = embedding_vector
+
+del embeddings_index
+X_train, X_valid, y_train, y_valid = train_test_split(train['description'].values, labels['deal_probability'].values, test_size = 0.1, random_state = 23)
+del train
+print('convert to sequences')
+X_train = tokenizer.texts_to_sequences(X_train)
+X_valid = tokenizer.texts_to_sequences(X_valid)
+
+print('padding')
+X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
+X_valid = sequence.pad_sequences(X_valid, maxlen=maxlen)
+
+def root_mean_squared_error(y_true, y_pred):
+    return K.sqrt(K.mean(K.square(y_pred - y_true)))
+
+
+def build_model():
+    inp = Input(shape = (maxlen, ))
+    emb = Embedding(nb_words, embed_size, weights = [embedding_matrix],
+                    input_length = maxlen, trainable = False)(inp)
+    main = SpatialDropout1D(0.2)(emb)
+    main = Bidirectional(CuDNNGRU(32,return_sequences = True))(main)
+    main = GlobalAveragePooling1D()(main)
+    main = Dropout(0.2)(main)
+    out = Dense(1, activation = "sigmoid")(main)
+
+    model = Model(inputs = inp, outputs = out)
+
+    model.compile(optimizer = Adam(lr=0.001), loss = 'mean_squared_error',
+                  metrics =[root_mean_squared_error])
+    model.summary()
+    return model
+
+EPOCHS = 4
+
+model = build_model()
+file_path = "model.hdf5"
+
+check_point = ModelCheckpoint(file_path, monitor = "val_loss", mode = "min", save_best_only = True, verbose = 1)
+history = model.fit(X_train, y_train, batch_size = 256, epochs = EPOCHS, validation_data = (X_valid, y_valid),
+                verbose = 1, callbacks = [check_point])
+model.load_weights(file_path)
+prediction = model.predict(X_valid)
+print('RMSE:', np.sqrt(metrics.mean_squared_error(y_valid, prediction)))
+
+
+test = pd.read_csv(TEST_CSV, index_col = 0)
+test = test[['description']].copy()
+
+test['description'] = test['description'].astype(str)
+X_test = test['description'].values
+X_test = tokenizer.texts_to_sequences(X_test)
+
+print('padding')
+X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
+prediction = model.predict(X_test,batch_size = 128, verbose = 1)
+
+sample_submission = pd.read_csv('../input/avito-demand-prediction/sample_submission.csv', index_col = 0)
+submission = sample_submission.copy()
+submission['deal_probability'] = prediction
+submission.to_csv('one.csv')
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++ xgboost+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#https://www.kaggle.com/wolfgangb33r/avito-prediction-xgboost-simple
+
+# Simple first attempt to predict the propability of demand
+# Not using the image info so far and only taking simple 
+# categorical features into account
+
+'''
+import numpy as np
+import pandas as pd
+import math
+import time
+import os.path
+import gc
+import random
+
+import xgboost as xgb
+
+def print_duration (start_time, msg):
+    print("[%d] %s" % (int(time.time() - start_time), msg))
+    start_time = time.time()
+    return start_time
+    
+# quick way of calculating a numeric has for a string
+def n_hash(s):
+    random.seed(hash(s))
+    return random.random()
+
+# hash a complete column of a pandas dataframe    
+def hash_column (row, col):
+    if col in row:
+        return n_hash(row[col])
+    return n_hash('none')
+
+def main():
+    start_time = time.time()
+    # create a xgboost model
+    model = xgb.XGBRegressor(n_estimators=400, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=7)
+    
+    # load the training data
+    train = pd.read_csv('../input/train.csv')
+    # calculate consistent numeric hashes for any categorical features 
+    train['user_hash'] = train.apply (lambda row: hash_column (row, 'user_id'),axis=1)
+    train['region_hash'] = train.apply (lambda row: hash_column (row, 'region'),axis=1)
+    train['city_hash'] = train.apply (lambda row: hash_column (row, 'city'),axis=1)
+    train['parent_category_name_hash'] = train.apply (lambda row: hash_column (row, 'parent_category_name'),axis=1)
+    train['category_name_hash'] = train.apply (lambda row: hash_column (row, 'category_name'),axis=1)
+    train['user_type_hash'] = train.apply (lambda row: hash_column (row, 'user_type'),axis=1)
+    # for the beginning I use only the information if there is an image or not 
+    train['image_exists'] = train['image'].isnull().astype(int)
+    # calc log for price to reduce effect of very large price differences
+    train['price'] = np.log(train['price'])
+    #print(train.groupby(['image_exists']).image_exists.count())
+    #print(train['image_exists'])
+    start_time = print_duration (start_time, "Finished reading")   
+
+    # start training
+    train_X = train.as_matrix(columns=['image_top_1', 'user_hash', 'price', 'region_hash', 'city_hash', 'parent_category_name_hash', 'category_name_hash', 'user_type_hash', 'image_exists'])
+    model.fit(train_X, train['deal_probability'])
+    
+    # read test data set
+    test = pd.read_csv('../input/test.csv')
+    test['user_hash'] = test.apply (lambda row: hash_column (row, 'user_id'),axis=1)
+    test['region_hash'] = test.apply (lambda row: hash_column (row, 'region'),axis=1)
+    test['city_hash'] = test.apply (lambda row: hash_column (row, 'city'),axis=1)
+    test['parent_category_name_hash'] = test.apply (lambda row: hash_column (row, 'parent_category_name'),axis=1)
+    test['category_name_hash'] = test.apply (lambda row: hash_column (row, 'category_name'),axis=1)
+    test['user_type_hash'] = test.apply (lambda row: hash_column (row, 'user_type'),axis=1)
+    test['image_exists'] = test['image'].isnull().astype(int)
+    test['price'] = np.log(test['price'])
+    test_X = test.as_matrix(columns=['image_top_1', 'user_hash', 'price', 'region_hash', 'city_hash', 'parent_category_name_hash', 'category_name_hash', 'user_type_hash', 'image_exists'])
+    start_time = print_duration (start_time, "Finished training, start prediction")   
+    # predict the propabilities for binary classes    
+    pred = model.predict(test_X)
+    
+    start_time = print_duration (start_time, "Finished prediction, start store results")    
+    submission = pd.read_csv("../input/sample_submission.csv")
+    submission['deal_probability'] = pred
+    print(submission[submission['deal_probability'] > 0])
+    submission.to_csv("submission.csv", index=False)
+    start_time = print_duration(start_time, "Finished to store result")
+    
+if __name__ == '__main__':
+    main()
+    
+'''
+
+
+
+
+
+
+
+
