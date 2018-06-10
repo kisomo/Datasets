@@ -456,7 +456,134 @@ print('k_NN score = {:.4f}' .format(kNN_score))
 
 
 
-#+++++++++++++++++++++++++++++++++++++++ Hierarchical clustering ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+print("+++++++++++++++++++++++++++++++++++++++ Hierarchical clustering ++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+# needed imports
+from matplotlib import pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, linkage
+import numpy as np
+
+plt.scatter(X_train[:,0], X_train[:,1])
+plt.show()
+
+# generate the linkage matrix
+Z = linkage(X_train, 'ward')
+
+from scipy.cluster.hierarchy import cophenet
+from scipy.spatial.distance import pdist
+
+c, coph_dists = cophenet(Z, pdist(X_train))
+print(c)
+
+
+print(Z[0])
+print(Z[1])
+print(Z[:20])
+
+print(X[[33, 68, 62]])
+
+idxs = [33, 68, 62]
+plt.figure(figsize=(10, 8))
+plt.scatter(X[:,0], X[:,1])  # plot all points
+plt.scatter(X[idxs,0], X[idxs,1], c='r')  # plot interesting points in red again
+plt.show()
+
+# calculate full dendrogram
+plt.figure(figsize=(25, 10))
+plt.title('Hierarchical Clustering Dendrogram')
+plt.xlabel('sample index')
+plt.ylabel('distance')
+dendrogram(
+    Z,
+    leaf_rotation=90.,  # rotates the x axis labels
+    leaf_font_size=8.,  # font size for the x axis labels
+)
+plt.show()
+
+
+print(Z[-8:,2])
+
+
+plt.title('Hierarchical Clustering Dendrogram (truncated)')
+plt.xlabel('sample index')
+plt.ylabel('distance')
+dendrogram(
+    Z,
+    truncate_mode='lastp',  # show only the last p merged clusters
+    p=12,  # show only the last p merged clusters
+    show_leaf_counts=False,  # otherwise numbers in brackets are counts
+    leaf_rotation=90.,
+    leaf_font_size=12.,
+    show_contracted=True,  # to get a distribution impression in truncated branches
+)
+plt.show()
+
+
+plt.title('Hierarchical Clustering Dendrogram (truncated)')
+plt.xlabel('sample index or (cluster size)')
+plt.ylabel('distance')
+dendrogram(
+    Z,
+    truncate_mode='lastp',  # show only the last p merged clusters
+    p=12,  # show only the last p merged clusters
+    leaf_rotation=90.,
+    leaf_font_size=12.,
+    show_contracted=True,  # to get a distribution impression in truncated branches
+)
+plt.show()
+
+
+def fancy_dendrogram(*args, **kwargs):
+    max_d = kwargs.pop('max_d', None)
+    if max_d and 'color_threshold' not in kwargs:
+        kwargs['color_threshold'] = max_d
+    annotate_above = kwargs.pop('annotate_above', 0)
+
+    ddata = dendrogram(*args, **kwargs)
+
+    if not kwargs.get('no_plot', False):
+        plt.title('Hierarchical Clustering Dendrogram (truncated)')
+        plt.xlabel('sample index or (cluster size)')
+        plt.ylabel('distance')
+        for i, d, c in zip(ddata['icoord'], ddata['dcoord'], ddata['color_list']):
+            x = 0.5 * sum(i[1:3])
+            y = d[1]
+            if y > annotate_above:
+                plt.plot(x, y, 'o', c=c)
+                plt.annotate("%.3g" % y, (x, y), xytext=(0, -5),
+                             textcoords='offset points',
+                             va='top', ha='center')
+        if max_d:
+            plt.axhline(y=max_d, c='k')
+    return ddata
+
+
+fancy_dendrogram(
+    Z,
+    truncate_mode='lastp',
+    p=12,
+    leaf_rotation=90.,
+    leaf_font_size=12.,
+    show_contracted=True,
+    annotate_above=10,  # useful in small plots so annotations don't overlap
+)
+plt.show()
+
+
+# set cut-off to 50
+max_d = 7  # max_d as in max_distance
+
+fancy_dendrogram(
+    Z,
+    truncate_mode='lastp',
+    p=12,
+    leaf_rotation=90.,
+    leaf_font_size=12.,
+    show_contracted=True,
+    annotate_above=10,
+    max_d=max_d,  # plot a horizontal cut-off line
+)
+plt.show()
 
 
 
@@ -464,7 +591,9 @@ print('k_NN score = {:.4f}' .format(kNN_score))
 
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++ svm +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+print("+++++++++++++++++++++++++++++++++++++++++++++++ svm +++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 #https://www.kaggle.com/mgabrielkerr/visualizing-knn-svm-and-xgboost-on-iris-dataset
 
@@ -511,7 +640,10 @@ print('SVM score = {:.4f}' .format(svm_score))
 
 
 
-'''
+
+
+
+
 print("++++++++++++++++++++++++++++++++++++++++ SOM +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 #https://dzone.com/articles/self-organizing-maps
@@ -532,7 +664,7 @@ print("Training...")
 som.train_random(data,100) # training with 100 iterations
 print("\n...ready!")
 
-
+'''
 from pylab import plot,axis,show,pcolor,colorbar,bone
 bone()
 pcolor(som.distance_map().T) # distance map as background
@@ -560,13 +692,4 @@ for cnt,xx in enumerate(data):
 axis([0,som.weights.shape[0],0,som.weights.shape[1]])
 show() # show the figure
 '''
-
-
-
-
-
-
-
-
-
 
