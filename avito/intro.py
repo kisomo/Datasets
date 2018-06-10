@@ -25,6 +25,7 @@ from sklearn import preprocessing
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+'''
 
 print("\nData Load Stage")
 training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
@@ -140,10 +141,11 @@ catsub.to_csv("catsub_two.csv",index=True,header=True) # Between 0 and 1
 print("Model Runtime: %0.2f Minutes"%((time.time() - modelstart)/60))
 print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
-
-
-
 '''
+
+
+
+
 print("++++++++++++++++++++++++++++++++++++++++++++++++++++ FastText +++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 #https://www.kaggle.com/christofhenkel/fasttext-starter-description-only/code
@@ -162,7 +164,6 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 import os
 
-
 EMBEDDING_FILE = '/home/terrence/CODING/Python/MODELS/AvitoData/cc.ru.300.vec'
 TRAIN_CSV = '/home/terrence/CODING/Python/MODELS/AvitoData/train.csv'
 TEST_CSV = '/home/terrence/CODING/Python/MODELS/AvitoData/test.csv'
@@ -178,6 +179,11 @@ print(train.head(2))
 labels = train[['deal_probability']].copy()
 train = train[['description']].copy()
 
+#emb = pd.read_csv(EMBEDDING_FILE, index_col = 0)
+#print(emb.shape)
+#print(emb.head(2))
+
+
 tokenizer = text.Tokenizer(num_words=max_features)
 print('fitting tokenizer')
 
@@ -189,6 +195,9 @@ tokenizer.fit_on_texts(list(train['description'].fillna('NA').values))
 print('getting embeddings')
 def get_coefs(word, *arr): return word, np.asarray(arr, dtype='float32')
 embeddings_index = dict(get_coefs(*o.rstrip().rsplit(' ')) for o in tqdm(open(EMBEDDING_FILE)))
+
+print("+++++++++++++++++++++++++++")
+#print(embeddings_index.shape)
 
 word_index = tokenizer.word_index
 nb_words = min(max_features, len(word_index))
@@ -204,6 +213,7 @@ del train
 print('convert to sequences')
 X_train = tokenizer.texts_to_sequences(X_train)
 X_valid = tokenizer.texts_to_sequences(X_valid)
+
 
 print('padding')
 X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
@@ -254,12 +264,12 @@ print('padding')
 X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
 prediction = model.predict(X_test,batch_size = 128, verbose = 1)
 
-sample_submission = pd.read_csv('../input/avito-demand-prediction/sample_submission.csv', index_col = 0)
+sample_submission = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/sample_submission.csv', index_col = 0)
 submission = sample_submission.copy()
 submission['deal_probability'] = prediction
-submission.to_csv('one.csv')
+submission.to_csv('FastText_one.csv')
 
-'''
+
 
 
 
