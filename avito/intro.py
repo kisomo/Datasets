@@ -146,6 +146,7 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 
 
+'''
 print("++++++++++++++++++++++++++++++++++++++++++++++++++++ FastText +++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 #https://www.kaggle.com/christofhenkel/fasttext-starter-description-only/code
@@ -270,10 +271,12 @@ submission['deal_probability'] = prediction
 submission.to_csv('FastText_one.csv')
 
 
+'''
 
 
 
 '''
+
 print("+++++++++++++++++++++++++++++++++++++++++++++ xgboost+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 #https://www.kaggle.com/wolfgangb33r/avito-prediction-xgboost-simple
 
@@ -296,11 +299,21 @@ def print_duration (start_time, msg):
     print("[%d] %s" % (int(time.time() - start_time), msg))
     start_time = time.time()
     return start_time
-    
+
+#start_time = time.time()
+#print_duration(start_time, "Just Testing") 
+
+msg = "Just Testing"
 # quick way of calculating a numeric has for a string
 def n_hash(s):
     random.seed(hash(s))
     return random.random()
+
+#print(n_hash(msg))
+#print(hash(msg))
+#print(random.seed(hash(msg)))
+#print(random.random())
+
 
 # hash a complete column of a pandas dataframe    
 def hash_column (row, col):
@@ -308,13 +321,112 @@ def hash_column (row, col):
         return n_hash(row[col])
     return n_hash('none')
 
+train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv')
+test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv')
+
+#print(train.shape)
+#print(train.head(2))
+#print(train.dtypes)
+
+#print(test.shape)
+#print(test.head(2))
+#print(test.dtypes)
+
+from sklearn.cross_validation import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+#CountVectorizer(charset='koi8r', stop_words=stopWords)
+
+
+#count_vectorizer = CountVectorizer(stop_words='english')
+#count_train = count_vectorizer.fit_transform(X_train)
+#count_test = count_vectorizer.fit_transform(X_test)
+#tfidf_vectorizer = TfidfVectorizer(stop_words = 'english',max_df=0.7)
+#tfidf_vectorizer = TfidfTransformer(stop_words = 'english',max_df=0.7)
+#tfidf_train = tfidf_vectorizer.fit_transform(X_train)
+#tfidf_test = tfidf_vectorizer.fit_transform(X_test)
+#CountVectorizer(charset='koi8r', stop_words=stopWords)
+
+
+count_vectorizer = CountVectorizer()
+
+start_time = time.time()
+# create a xgboost model
+model = xgb.XGBRegressor(n_estimators=2, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=3)
+
+# calculate consistent numeric hashes for any categorical features 
+train['user_id'] = train.apply (lambda row: hash_column (row, 'user_id'),axis=1)
+#train['user_id'] = count_vectorizer.fit_transform(train['user_id'])
+train['region'] = train.apply (lambda row: hash_column (row, 'region'),axis=1)
+#train['region'] = count_vectorizer.fit_transform(train['regions'])
+train['city'] = train.apply (lambda row: hash_column (row, 'city'),axis=1)
+#train['city'] = count_vectorizer.fit_transform(train['city'])
+train['parent_category_name'] = train.apply (lambda row: hash_column (row, 'parent_category_name'),axis=1)
+#train['parent_category_name'] = count_vectorizer.fit_transform(train['parent_category_name'])
+train['category_name'] = train.apply (lambda row: hash_column (row, 'category_name'),axis=1)
+#train['category_name'] = count_vectorizer.fit_transform(train['category_name'])
+train['user_type'] = train.apply (lambda row: hash_column (row, 'user_type'),axis=1)
+#train['user_type'] = count_vectorizer.fit_transform(train['user_type'])
+#train['description'] = train.apply (lambda row: hash_column (row, 'description'),axis=1)
+#train['description'].fillna(0)
+train['description'].fillna('Unknown')
+train['description'] = count_vectorizer.fit_transform(train['description'])
+train['price'] = np.log(train['price'] + 0.01)
+start_time = print_duration (start_time, "Finished reading")      
+
+print(train.shape)
+#print(train.head(2))
+#print(train.dtypes)
+
+# start training
+train_X = train.as_matrix(columns=['user_id', 'price', 'region', 'city', 'parent_category_name', 'category_name', 'user_type', 'description'])
+model.fit(train_X, train['deal_probability'])
+    
+# read test data set
+#test['user_id'] = test.apply (lambda row: hash_column (row, 'user_id'),axis=1)
+test['user_id'] = test.apply (lambda row: hash_column (row, 'user_id'),axis=1)
+#test['region'] = count_vectorizer.fit_transform(test['user_id'])
+test['region'] = test.apply (lambda row: hash_column (row, 'region'),axis=1)
+#test['city'] = count_vectorizer.fit_transform(test['city'])
+test['city'] = test.apply (lambda row: hash_column (row, 'city'),axis=1)
+#test['parent_category_name'] = count_vectorizer.fit_transform(test['parent_category_name'])
+test['parent_category_name'] = test.apply (lambda row: hash_column (row, 'parent_category_name'),axis=1)
+#test['category_name'] = count_vectorizer.fit_transform(test['category_name'])
+test['category_name'] = test.apply (lambda row: hash_column (row, 'category_name'),axis=1)
+#test['user_type'] = count_vectorizer.fit_transform(test['user_type'])
+test['user_type'] = test.apply (lambda row: hash_column (row, 'user_type'),axis=1)
+#test['description'].fillna(0)
+test['description'].fillna('Unknown')
+test['description'] = count_vectorizer.fit_transform(test['description'])
+#test['description'] = test.apply (lambda row: hash_column (row, 'description'),axis=1)
+test['price'] = np.log(test['price'] + 0.01)
+test_X = test.as_matrix(columns=[ 'user_id', 'price', 'region', 'city', 'parent_category_name', 'category_name', 'user_type', 'description'])
+
+start_time = print_duration (start_time, "Finished training, start prediction")   
+    # predict the propabilities for binary classes    
+pred = model.predict(test_X)
+   
+start_time = print_duration (start_time, "Finished prediction, start store results")    
+submission = pd.read_csv("/home/terrence/CODING/Python/MODELS/AvitoData/sample_submission.csv")
+submission['deal_probability'] = pred
+print(submission[submission['deal_probability'] > 0])
+submission.to_csv("xgb_three.csv", index=False)
+start_time = print_duration(start_time, "Finished to store result")
+
+'''
+
+
+
+'''
 def main():
     start_time = time.time()
     # create a xgboost model
-    model = xgb.XGBRegressor(n_estimators=400, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=7)
+    model = xgb.XGBRegressor(n_estimators=20, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=3)
     
     # load the training data
-    train = pd.read_csv('../input/train.csv')
+    train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv')
     # calculate consistent numeric hashes for any categorical features 
     train['user_hash'] = train.apply (lambda row: hash_column (row, 'user_id'),axis=1)
     train['region_hash'] = train.apply (lambda row: hash_column (row, 'region'),axis=1)
@@ -325,7 +437,7 @@ def main():
     # for the beginning I use only the information if there is an image or not 
     train['image_exists'] = train['image'].isnull().astype(int)
     # calc log for price to reduce effect of very large price differences
-    train['price'] = np.log(train['price'])
+    train['price'] = np.log(train['price'] + 0.01)
     #print(train.groupby(['image_exists']).image_exists.count())
     #print(train['image_exists'])
     start_time = print_duration (start_time, "Finished reading")   
@@ -335,7 +447,7 @@ def main():
     model.fit(train_X, train['deal_probability'])
     
     # read test data set
-    test = pd.read_csv('../input/test.csv')
+    test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv')
     test['user_hash'] = test.apply (lambda row: hash_column (row, 'user_id'),axis=1)
     test['region_hash'] = test.apply (lambda row: hash_column (row, 'region'),axis=1)
     test['city_hash'] = test.apply (lambda row: hash_column (row, 'city'),axis=1)
@@ -350,10 +462,10 @@ def main():
     pred = model.predict(test_X)
     
     start_time = print_duration (start_time, "Finished prediction, start store results")    
-    submission = pd.read_csv("../input/sample_submission.csv")
+    submission = pd.read_csv("/home/terrence/CODING/Python/MODELS/AvitoData/sample_submission.csv")
     submission['deal_probability'] = pred
     print(submission[submission['deal_probability'] > 0])
-    submission.to_csv("submission.csv", index=False)
+    submission.to_csv("xgb_one.csv", index=False)
     start_time = print_duration(start_time, "Finished to store result")
     
 if __name__ == '__main__':
@@ -362,7 +474,10 @@ if __name__ == '__main__':
 '''
 
 
-'''
+
+
+
+
 print("++++++++++++++++++++++++++++++++++++++++++++++++++ lightGBM +++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 #https://www.kaggle.com/him4318/avito-lightgbm-with-ridge-feature-v-2-0/code
@@ -374,7 +489,7 @@ import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import os
 import gc
-print("Data:\n",os.listdir("../input"))
+print("Data:\n",os.listdir("/home/terrence/CODING/Python/MODELS/AvitoData"))
 
 # Models Packages
 from sklearn import metrics
@@ -399,6 +514,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import re
 import string
+
 
 NFOLDS = 5
 SEED = 42
@@ -451,14 +567,16 @@ def rmse(y, y0):
     assert len(y) == len(y0)
     return np.sqrt(np.mean(np.power((y - y0), 2)))
 
+
 print("\nData Load Stage")
-training = pd.read_csv('../input/train.csv', index_col = "item_id", parse_dates = ["activation_date"])
+training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])
 traindex = training.index
-testing = pd.read_csv('../input/test.csv', index_col = "item_id", parse_dates = ["activation_date"])
+testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"])
 testdex = testing.index
 
 ntrain = training.shape[0]
 ntest = testing.shape[0]
+
 
 kf = KFold(ntrain, n_folds=NFOLDS, shuffle=True, random_state=SEED)
 
@@ -484,6 +602,7 @@ df["Weekday"] = df['activation_date'].dt.weekday
 df["Weekd of Year"] = df['activation_date'].dt.week
 df["Day of Month"] = df['activation_date'].dt.day
 
+print(df.shape)
 
 # Create Validation Index and Remove Dead Variables
 training_index = df.loc[df.activation_date<=pd.to_datetime('2017-04-07')].index
@@ -493,6 +612,7 @@ df.drop(["activation_date","image"],axis=1,inplace=True)
 print("\nEncode Variables")
 categorical = ["user_id","region","city","parent_category_name","category_name","user_type","image_top_1","param_1","param_2","param_3"]
 print("Encoding :",categorical)
+
 
 # Encoder:
 lbl = preprocessing.LabelEncoder()
@@ -522,6 +642,7 @@ for cols in textfeats:
 
 print("\n[TF-IDF] Term Frequency Inverse Document Frequency Stage")
 russian_stop = set(stopwords.words('russian'))
+
 
 tfidf_para = {
     "stop_words": russian_stop,
@@ -553,6 +674,7 @@ vectorizer = FeatureUnion([
     
 start_vect=time.time()
 
+
 #Fit my vectorizer on the entire dataset instead of the training rows
 #Score improved by .0001
 vectorizer.fit(df.to_dict('records'))
@@ -565,9 +687,11 @@ print("Vectorization Runtime: %0.2f Minutes"%((time.time() - start_vect)/60))
 textfeats = ["description", "title"]
 df.drop(textfeats, axis=1,inplace=True)
 
+
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 
+'''
 ridge_params = {'alpha':30.0, 'fit_intercept':True, 'normalize':False, 'copy_X':True,
                 'max_iter':None, 'tol':0.001, 'solver':'auto', 'random_state':SEED}
 
