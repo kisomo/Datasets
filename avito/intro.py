@@ -530,6 +530,9 @@ class SklearnWrapper(object):
 
     def predict(self, x):
         return self.clf.predict(x)
+
+##ridge = SklearnWrapper(clf=Ridge, seed = SEED, params = ridge_params)
+
         
 def get_oof(clf, x_train, y, x_test):
     oof_train = np.zeros((ntrain,))
@@ -562,28 +565,34 @@ def cleanName(text):
     except: 
         return "name error"
     
-    
+  
 def rmse(y, y0):
     assert len(y) == len(y0)
     return np.sqrt(np.mean(np.power((y - y0), 2)))
 
 
 print("\nData Load Stage")
-training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])
+training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(2000)
 traindex = training.index
-testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"])
+testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(2000)
 testdex = testing.index
+
 
 ntrain = training.shape[0]
 ntest = testing.shape[0]
 
+print(ntrain)
+print(ntest)
 
 kf = KFold(ntrain, n_folds=NFOLDS, shuffle=True, random_state=SEED)
+print(kf)
+
 
 y = training.deal_probability.copy()
 training.drop("deal_probability",axis=1, inplace=True)
 print('Train shape: {} Rows, {} Columns'.format(*training.shape))
 print('Test shape: {} Rows, {} Columns'.format(*testing.shape))
+
 
 print("Combine Train and Test")
 df = pd.concat([training,testing],axis=0)
@@ -609,6 +618,10 @@ training_index = df.loc[df.activation_date<=pd.to_datetime('2017-04-07')].index
 validation_index = df.loc[df.activation_date>=pd.to_datetime('2017-04-08')].index
 df.drop(["activation_date","image"],axis=1,inplace=True)
 
+print(df.shape)
+print(df.head(2))
+print(df.dtypes)
+
 print("\nEncode Variables")
 categorical = ["user_id","region","city","parent_category_name","category_name","user_type","image_top_1","param_1","param_2","param_3"]
 print("Encoding :",categorical)
@@ -621,7 +634,8 @@ for col in categorical:
     df[col] = lbl.fit_transform(df[col].astype(str))
     
 print("\nText Features")
-
+#print(df.shape)
+#print(df.head(2))
 # Feature Engineering 
 
 # Meta Text Features
@@ -631,6 +645,10 @@ df['desc_punc'] = df['description'].apply(lambda x: len([c for c in str(x) if c 
 df['title'] = df['title'].apply(lambda x: cleanName(x))
 df["description"]   = df["description"].apply(lambda x: cleanName(x))
 
+print(df.shape)
+#print(df.head(2))
+
+
 for cols in textfeats:
     df[cols] = df[cols].astype(str) 
     df[cols] = df[cols].astype(str).fillna('missing') # FILL NA
@@ -638,11 +656,14 @@ for cols in textfeats:
     df[cols + '_num_words'] = df[cols].apply(lambda comment: len(comment.split())) # Count number of Words
     df[cols + '_num_unique_words'] = df[cols].apply(lambda comment: len(set(w for w in comment.split())))
     df[cols + '_words_vs_unique'] = df[cols+'_num_unique_words'] / df[cols+'_num_words'] * 100 # Count Unique Words
-    
+
+print(df.shape)    
+#print(df.head(2))
 
 print("\n[TF-IDF] Term Frequency Inverse Document Frequency Stage")
 russian_stop = set(stopwords.words('russian'))
 
+#print(russian_stop)
 
 tfidf_para = {
     "stop_words": russian_stop,
@@ -660,11 +681,10 @@ tfidf_para = {
 def get_col(col_name): return lambda x: x[col_name]
 ##I added to the max_features of the description. It did not change my score much but it may be worth investigating
 vectorizer = FeatureUnion([
-        ('description',TfidfVectorizer(
-            ngram_range=(1, 2),
-            max_features=17000,
-            **tfidf_para,
-            preprocessor=get_col('description'))),
+        ('description',TfidfVectorizer( ngram_range=(1, 2),
+         max_features=17000, 
+         #**tfidf_para, 
+         preprocessor=get_col('description'))),
         ('title',CountVectorizer(
             ngram_range=(1, 2),
             stop_words = russian_stop,
@@ -674,6 +694,10 @@ vectorizer = FeatureUnion([
     
 start_vect=time.time()
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+#sys.setdefaultencoding('ascii')
 
 #Fit my vectorizer on the entire dataset instead of the training rows
 #Score improved by .0001
@@ -687,14 +711,16 @@ print("Vectorization Runtime: %0.2f Minutes"%((time.time() - start_vect)/60))
 textfeats = ["description", "title"]
 df.drop(textfeats, axis=1,inplace=True)
 
+print(df.shape)
 
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 
-'''
+
 ridge_params = {'alpha':30.0, 'fit_intercept':True, 'normalize':False, 'copy_X':True,
                 'max_iter':None, 'tol':0.001, 'solver':'auto', 'random_state':SEED}
 
+'''
 #Ridge oof method from Faron's kernel
 #I was using this to analyze my vectorization, but figured it would be interesting to add the results back into the dataset
 #It doesn't really add much to the score, but it does help lightgbm converge faster
@@ -719,6 +745,7 @@ for shape in [X,testing]:
 print("Feature Names Length: ",len(tfvocab))
 del df
 gc.collect();
+
 
 print("\nModeling Stage")
 
