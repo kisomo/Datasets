@@ -515,6 +515,7 @@ import matplotlib.pyplot as plt
 import re
 import string
 
+'''
 
 NFOLDS = 5
 SEED = 42
@@ -572,9 +573,9 @@ def rmse(y, y0):
 
 
 print("\nData Load Stage")
-training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(2000)
+training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(2500)
 traindex = training.index
-testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(2000)
+testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(500)
 testdex = testing.index
 
 
@@ -618,6 +619,7 @@ training_index = df.loc[df.activation_date<=pd.to_datetime('2017-04-07')].index
 validation_index = df.loc[df.activation_date>=pd.to_datetime('2017-04-08')].index
 df.drop(["activation_date","image"],axis=1,inplace=True)
 
+
 print(df.shape)
 print(df.head(2))
 print(df.dtypes)
@@ -632,7 +634,9 @@ lbl = preprocessing.LabelEncoder()
 for col in categorical:
     df[col].fillna('Unknown')
     df[col] = lbl.fit_transform(df[col].astype(str))
-    
+
+df.drop(["user_type","image_top_1","param_1","param_2","param_3","item_seq_number","image_top_1","Weekd of Year","Day of Month"],axis=1,inplace=True) # TERRENCE
+
 print("\nText Features")
 #print(df.shape)
 #print(df.head(2))
@@ -653,12 +657,13 @@ for cols in textfeats:
     df[cols] = df[cols].astype(str) 
     df[cols] = df[cols].astype(str).fillna('missing') # FILL NA
     df[cols] = df[cols].str.lower() # Lowercase all text, so that capitalized words dont get treated differently
-    df[cols + '_num_words'] = df[cols].apply(lambda comment: len(comment.split())) # Count number of Words
-    df[cols + '_num_unique_words'] = df[cols].apply(lambda comment: len(set(w for w in comment.split())))
-    df[cols + '_words_vs_unique'] = df[cols+'_num_unique_words'] / df[cols+'_num_words'] * 100 # Count Unique Words
+    #df[cols + '_num_words'] = df[cols].apply(lambda comment: len(comment.split())) # Count number of Words
+    #df[cols + '_num_unique_words'] = df[cols].apply(lambda comment: len(set(w for w in comment.split())))
+    #df[cols + '_words_vs_unique'] = df[cols+'_num_unique_words'] / df[cols+'_num_words'] * 100 # Count Unique Words
 
 print(df.shape)    
-#print(df.head(2))
+print(df.head(2))
+
 
 print("\n[TF-IDF] Term Frequency Inverse Document Frequency Stage")
 russian_stop = set(stopwords.words('russian'))
@@ -694,14 +699,19 @@ vectorizer = FeatureUnion([
     
 start_vect=time.time()
 
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-#sys.setdefaultencoding('ascii')
+sys.setdefaultencoding('ascii')
+
+print(df.shape)
+
 
 #Fit my vectorizer on the entire dataset instead of the training rows
 #Score improved by .0001
-vectorizer.fit(df.to_dict('records'))
+#vectorizer.fit(df.to_dict('records'))
+vectorizer.fit(df)
 
 ready_df = vectorizer.transform(df.to_dict('records'))
 tfvocab = vectorizer.get_feature_names()
@@ -720,7 +730,7 @@ from math import sqrt
 ridge_params = {'alpha':30.0, 'fit_intercept':True, 'normalize':False, 'copy_X':True,
                 'max_iter':None, 'tol':0.001, 'solver':'auto', 'random_state':SEED}
 
-'''
+
 #Ridge oof method from Faron's kernel
 #I was using this to analyze my vectorization, but figured it would be interesting to add the results back into the dataset
 #It doesn't really add much to the score, but it does help lightgbm converge faster
@@ -828,6 +838,110 @@ lgsub.to_csv("lgsub.csv",index=True,header=True)
 print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 '''
+
+#++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#https://www.kaggle.com/classtag/extract-avito-image-features-via-keras-vgg16
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import os
+print(os.listdir("/home/terrence/CODING/Python/MODELS/AvitoData"))
+
+from keras.preprocessing import image
+from keras.applications.vgg16 import VGG16
+from keras.applications.resnet50 import ResNet50
+from keras.applications import xception
+from keras.applications import inception_v3
+
+#https://www.kaggle.com/gaborfodor/keras-pretrained-models/data
+
+!ls ../input/keras-pretrained-models/
+
+from os import listdir, makedirs
+from os.path import join, exists, expanduser
+
+cache_dir = expanduser(join('~', '.keras'))
+if not exists(cache_dir):
+    makedirs(cache_dir)
+models_dir = join(cache_dir, 'models')
+if not exists(models_dir):
+    makedirs(models_dir)
+
+!cp ../input/keras-pretrained-models/*notop* ~/.keras/models/
+!cp ../input/keras-pretrained-models/imagenet_class_index.json ~/.keras/models/
+!cp ../input/keras-pretrained-models/resnet50* ~/.keras/models/
+
+!ls ~/.keras/models
+
+
+from keras.preprocessing import image
+from keras.applications.vgg16 import VGG16
+from keras.applications.vgg16 import preprocess_input
+import numpy as np
+
+model = VGG16(weights='imagenet', include_top=False)
+model.summary()
+
+!ls ../input/avito-demand-prediction/
+
+
+import zipfile
+
+myzip = zipfile.ZipFile('../input/avito-demand-prediction/train_jpg.zip')
+files_in_zip = myzip.namelist()
+for idx, file in enumerate(files_in_zip[:5]):
+    if file.endswith('.jpg'):
+        myzip.extract(file, path=file.split('/')[3])
+myzip.close()
+
+
+!ls *.jpg
+
+!ls 856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/
+
+img_path = './856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
+img = image.load_img(img_path, target_size=(224, 224))
+
+img
+
+
+x = image.img_to_array(img)  # 3 dims(3, 224, 224)
+x = np.expand_dims(x, axis=0)  # 4 dims(1, 3, 224, 224)
+x = preprocess_input(x)
+
+features = model.predict(x)
+
+features.reshape((25088,))
+
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
