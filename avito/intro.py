@@ -841,6 +841,7 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 
 
+
 '''
 #++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #https://www.kaggle.com/classtag/extract-avito-image-features-via-keras-vgg16
@@ -856,25 +857,26 @@ from keras.applications.resnet50 import ResNet50
 from keras.applications import xception
 from keras.applications import inception_v3
 
+
 #https://www.kaggle.com/gaborfodor/keras-pretrained-models/data
 
-!ls ../input/keras-pretrained-models/
+print(os.listdir("/home/terrence/CODING/Python/MODELS/keras-pretrained-models/"))
 
 from os import listdir, makedirs
 from os.path import join, exists, expanduser
 
-cache_dir = expanduser(join('~', '.keras'))
-if not exists(cache_dir):
-    makedirs(cache_dir)
-models_dir = join(cache_dir, 'models')
-if not exists(models_dir):
-    makedirs(models_dir)
+#cache_dir = expanduser(join('~', '.keras'))
+#if not exists(cache_dir):
+#    makedirs(cache_dir)
+#models_dir = join(cache_dir, 'models')
+#if not exists(models_dir):
+#    makedirs(models_dir)
 
-!cp ../input/keras-pretrained-models/*notop* ~/.keras/models/
-!cp ../input/keras-pretrained-models/imagenet_class_index.json ~/.keras/models/
-!cp ../input/keras-pretrained-models/resnet50* ~/.keras/models/
+#!cp ../input/keras-pretrained-models/*notop* ~/.keras/models/
+#!cp ../input/keras-pretrained-models/imagenet_class_index.json ~/.keras/models/
+#!cp ../input/keras-pretrained-models/resnet50* ~/.keras/models/
 
-!ls ~/.keras/models
+#!ls ~/.keras/models
 
 
 from keras.preprocessing import image
@@ -885,24 +887,27 @@ import numpy as np
 model = VGG16(weights='imagenet', include_top=False)
 model.summary()
 
-!ls ../input/avito-demand-prediction/
+
+#!ls ../input/avito-demand-prediction/
+#import zipfile
+#myzip = zipfile.ZipFile('../input/avito-demand-prediction/train_jpg.zip')
+#files_in_zip = myzip.namelist()
+#for idx, file in enumerate(files_in_zip[:5]):
+#    if file.endswith('.jpg'):
+#        myzip.extract(file, path=file.split('/')[3])
+#myzip.close()
+
+#!ls *.jpg
+#!ls 856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/
+
+#img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
+img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
+
+#tes = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/*.jpg')
+
+#print(test.shape)
 
 
-import zipfile
-
-myzip = zipfile.ZipFile('../input/avito-demand-prediction/train_jpg.zip')
-files_in_zip = myzip.namelist()
-for idx, file in enumerate(files_in_zip[:5]):
-    if file.endswith('.jpg'):
-        myzip.extract(file, path=file.split('/')[3])
-myzip.close()
-
-
-!ls *.jpg
-
-!ls 856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/
-
-img_path = './856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
 img = image.load_img(img_path, target_size=(224, 224))
 
 img
@@ -916,7 +921,12 @@ features = model.predict(x)
 
 features.reshape((25088,))
 
+print(features)
+
+img.show()
+
 '''
+
 
 
 
@@ -943,89 +953,104 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 from scipy.sparse import vstack
 
-@contextmanager
-def timer(name):
-    t0 = time.time()
-    yield
-    print(f'[{name}] done in {time.time() - t0:.0f} s')
+
+#@contextmanager
+#def timer(name):
+#    t0 = time.time()
+#    yield
+#    print(f'[{name}] done in {time.time() - t0:.0f} s')
 
 
-with timer('reading data'):
-    train = pd.read_csv('../input/train.csv')
-    test = pd.read_csv('../input/test.csv')
+#with timer('reading data'):
+#    train = pd.read_csv('../input/train.csv')
+#    test = pd.read_csv('../input/test.csv')
 
-with timer('imputation'):
-    train['param_1'].fillna('missing', inplace=True)
-    test['param_1'].fillna('missing', inplace=True)
-    train['param_2'].fillna('missing', inplace=True)
-    test['param_2'].fillna('missing', inplace=True)
-    train['param_3'].fillna('missing', inplace=True)
-    test['param_3'].fillna('missing', inplace=True)
-    train['image_top_1'].fillna(0, inplace=True)
-    test['image_top_1'].fillna(0, inplace=True)
-    train['price'].fillna(0, inplace=True)
-    test['price'].fillna(0, inplace=True)
-    train['price'] = np.log1p(train['price'])
-    test['price'] = np.log1p(test['price'])
-    price_mean = train['price'].mean()
-    price_std = train['price'].std()
-    train['price'] = (train['price'] - price_mean) / price_std
-    test['price'] = (test['price'] - price_mean) / price_std
-    train['description'].fillna('', inplace=True)
-    test['description'].fillna('', inplace=True)
-    # City names are duplicated across region, HT: Branden Murray https://www.kaggle.com/c/avito-demand-prediction/discussion/55630#321751
-    train['city'] = train['city'] + '_' + train['region']
-    test['city'] = test['city'] + '_' + test['region']
 
-    with timer('add new features'):
-    cat_cols = ['region', 'city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
-    num_cols = ['price', 'deal_probability']
-    for c in cat_cols:
-        for c2 in num_cols:
-            enc = train.groupby(c)[c2].agg(['mean']).astype(np.float32).reset_index()
-            enc.columns = ['_'.join([str(c), str(c2), str(c3)]) if c3 != c else c for c3 in enc.columns]
-            train = pd.merge(train, enc, how='left', on=c)
-            test = pd.merge(test, enc, how='left', on=c)
-    del(enc)
+print("\nData Load Stage")
+train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(2500)
+test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(500)
 
-train.head()
+print(train.shape)
+#print(train.head(2))
+
+#with timer('imputation'):
+train['param_1'].fillna('missing', inplace=True)
+test['param_1'].fillna('missing', inplace=True)
+train['param_2'].fillna('missing', inplace=True)
+test['param_2'].fillna('missing', inplace=True)
+train['param_3'].fillna('missing', inplace=True)
+test['param_3'].fillna('missing', inplace=True)
+train['image_top_1'].fillna(0, inplace=True)
+test['image_top_1'].fillna(0, inplace=True)
+train['price'].fillna(0, inplace=True)
+test['price'].fillna(0, inplace=True)
+train['price'] = np.log1p(train['price'])
+test['price'] = np.log1p(test['price'])
+price_mean = train['price'].mean()
+price_std = train['price'].std()
+train['price'] = (train['price'] - price_mean) / price_std
+test['price'] = (test['price'] - price_mean) / price_std
+train['description'].fillna('', inplace=True)
+test['description'].fillna('', inplace=True)
+# City names are duplicated across region, HT: Branden Murray https://www.kaggle.com/c/avito-demand-prediction/discussion/55630#321751
+train['city'] = train['city'] + '_' + train['region']
+test['city'] = test['city'] + '_' + test['region']
+
+#with timer('add new features'):
+cat_cols = ['region', 'city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
+num_cols = ['price', 'deal_probability']
+for c in cat_cols:
+    for c2 in num_cols:
+        enc = train.groupby(c)[c2].agg(['mean']).astype(np.float32).reset_index()
+        enc.columns = ['_'.join([str(c), str(c2), str(c3)]) if c3 != c else c for c3 in enc.columns]
+        train = pd.merge(train, enc, how='left', on=c)
+        test = pd.merge(test, enc, how='left', on=c)
+del(enc)
+
+print(train.shape)
+print(train.head(2))
 
 
 from sklearn.model_selection import train_test_split
-
-def preprocess(df: pd.DataFrame) -> pd.DataFrame:
-    ex_col = ['item_id', 'user_id', 'deal_probability', 'title', 'param_1', 'param_2', 'param_3', 'activation_date']
-    df['description_len'] = df['description'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
-    df['description_wc'] = df['description'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
-    df['description'] = (df['parent_category_name'] + ' ' + df['category_name'] + ' ' + df['param_1'] + ' ' + df['param_2'] + ' ' + df['param_3'] + ' ' +
-                        df['title'] + ' ' + df['description'].fillna(''))
-    df['description'] = df['description'].str.lower().replace(r"[^[:alpha:]]", " ")
-    df['description'] = df['description'].str.replace(r"\\s+", " ")
-    df['title_len'] = df['title'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
-    df['title_wc'] = df['title'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
-    df['image'] = df['image'].map(lambda x: 1 if len(str(x))>0 else 0)
-    df['price'] = np.log1p(df['price'].fillna(0))
-    df['wday'] = pd.to_datetime(df['activation_date']).dt.dayofweek
-    col = [c for c in df.columns if c not in ex_col]
-    return df[col]
-
-with timer('process train'):
-    train, valid = train_test_split(train, test_size=0.05, shuffle=True, random_state=37)
-    y_train = train['deal_probability'].values
-    X_train = preprocess(train)
-    print(f'X_train: {X_train.shape}')
-
-with timer('process valid'):
-    X_valid = preprocess(valid)
-    print(f'X_valid: {X_valid.shape}')
-
-with timer('process test'):
-    X_test = preprocess(test)
-    print(f'X_test: {X_test.shape}')
-
-X_train.head()
+df = train
+#def preprocess(df: pd.DataFrame) -> pd.DataFrame:
+ex_col = ['item_id', 'user_id', 'deal_probability', 'title', 'param_1', 'param_2', 'param_3', 'activation_date']
+df['description_len'] = df['description'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
+df['description_wc'] = df['description'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
+df['description'] = (df['parent_category_name'] + ' ' + df['category_name'] + ' ' + df['param_1'] + ' ' + df['param_2'] + ' ' + df['param_3'] + ' ' +
+                    df['title'] + ' ' + df['description'].fillna(''))
+df['description'] = df['description'].str.lower().replace(r"[^[:alpha:]]", " ")
+df['description'] = df['description'].str.replace(r"\\s+", " ")
+df['title_len'] = df['title'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
+df['title_wc'] = df['title'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
+df['image'] = df['image'].map(lambda x: 1 if len(str(x))>0 else 0)
+df['price'] = np.log1p(df['price'].fillna(0))
+df['wday'] = pd.to_datetime(df['activation_date']).dt.dayofweek
+col = [c for c in df.columns if c not in ex_col]
+#    return df[col]
+df = df[col]
+print(df.shape)
+print(df.head(2))
 
 
+
+#with timer('process train'):
+train, valid = train_test_split(train, test_size=0.05, shuffle=True, random_state=37)
+y_train = train['deal_probability'].values
+X_train = preprocess(train)
+#print(f'X_train: {X_train.shape}')
+
+#with timer('process valid'):
+X_valid = preprocess(valid)
+#print(f'X_valid: {X_valid.shape}')
+
+#with timer('process test'):
+X_test = preprocess(test)
+#print(f'X_test: {X_test.shape}')
+
+print(X_train.head())
+
+'''
 # Do some normalization
 desc_len_mean = X_train['description_len'].mean()
 desc_len_std = X_train['description_len'].std()
@@ -1351,7 +1376,7 @@ submission.head()
 #https://www.kaggle.com/dicksonchin93/xgb-with-mean-encode-tfidf-feature-0-232
 
 
-
+'''
 
 
 
