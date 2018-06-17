@@ -955,11 +955,11 @@ from scipy.sparse import vstack
 
 
 #@contextmanager
-#def timer(name):
-#    t0 = time.time()
-#    yield
-#    print(f'[{name}] done in {time.time() - t0:.0f} s')
-
+def timer(name):
+    t0 = time.time()
+    #yield
+    #print(f'[{name}] done in {time.time() - t0:.0f} s')
+    print('{} done in {}'.format(name,time.time() - t0))
 
 #with timer('reading data'):
 #    train = pd.read_csv('../input/train.csv')
@@ -1007,30 +1007,33 @@ for c in cat_cols:
         test = pd.merge(test, enc, how='left', on=c)
 del(enc)
 
-print(train.shape)
-print(train.head(2))
+#print(train.shape)
+#print(train.head(2))
 
 
 from sklearn.model_selection import train_test_split
-df = train
+##df = train
 #def preprocess(df: pd.DataFrame) -> pd.DataFrame:
-ex_col = ['item_id', 'user_id', 'deal_probability', 'title', 'param_1', 'param_2', 'param_3', 'activation_date']
-df['description_len'] = df['description'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
-df['description_wc'] = df['description'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
-df['description'] = (df['parent_category_name'] + ' ' + df['category_name'] + ' ' + df['param_1'] + ' ' + df['param_2'] + ' ' + df['param_3'] + ' ' +
-                    df['title'] + ' ' + df['description'].fillna(''))
-df['description'] = df['description'].str.lower().replace(r"[^[:alpha:]]", " ")
-df['description'] = df['description'].str.replace(r"\\s+", " ")
-df['title_len'] = df['title'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
-df['title_wc'] = df['title'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
-df['image'] = df['image'].map(lambda x: 1 if len(str(x))>0 else 0)
-df['price'] = np.log1p(df['price'].fillna(0))
-df['wday'] = pd.to_datetime(df['activation_date']).dt.dayofweek
-col = [c for c in df.columns if c not in ex_col]
-#    return df[col]
-df = df[col]
-print(df.shape)
-print(df.head(2))
+def preprocess(df):
+    ex_col = ['item_id', 'user_id', 'deal_probability', 'title', 'param_1', 'param_2', 'param_3', 'activation_date']
+    df['description_len'] = df['description'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
+    df['description_wc'] = df['description'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
+    df['description'] = (df['parent_category_name'] + ' ' + df['category_name'] + ' ' + df['param_1'] + ' ' + df['param_2'] + ' ' + df['param_3'] + ' ' +
+                        df['title'] + ' ' + df['description'].fillna(''))
+    df['description'] = df['description'].str.lower().replace(r"[^[:alpha:]]", " ")
+    df['description'] = df['description'].str.replace(r"\\s+", " ")
+    df['title_len'] = df['title'].map(lambda x: len(str(x))).astype(np.float16) #Lenth
+    df['title_wc'] = df['title'].map(lambda x: len(str(x).split(' '))).astype(np.float16) #Word Count
+    df['image'] = df['image'].map(lambda x: 1 if len(str(x))>0 else 0)
+    #df['price'] = np.log1p(df['price'].fillna(0))
+    df['price'] = df['price'].fillna(0)
+    df['wday'] = pd.to_datetime(df['activation_date']).dt.dayofweek
+    col = [c for c in df.columns if c not in ex_col]
+    return df[col]
+
+##df = df[col]
+##print(df.shape)
+##print(df.head(2))
 
 
 
@@ -1048,9 +1051,10 @@ X_valid = preprocess(valid)
 X_test = preprocess(test)
 #print(f'X_test: {X_test.shape}')
 
-print(X_train.head())
+print(X_train.head(2))
+print(X_train.shape)
 
-'''
+
 # Do some normalization
 desc_len_mean = X_train['description_len'].mean()
 desc_len_std = X_train['description_len'].std()
@@ -1088,45 +1092,64 @@ X_train.fillna(0, inplace=True)
 X_valid.fillna(0, inplace=True)
 X_test.fillna(0, inplace=True)
 
-X_train.columns
+#print(X_train.columns)
+print(X_train.head(2))
+print(X_train.shape)
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+
+#from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
 
-with timer('TFIDF'):
-    tfidf = TfidfVectorizer(ngram_range=(1, 2),
-                            max_features=100000,
-                             token_pattern='\w+',
-                            encoding='KOI8-R')
-    tfidf_train = tfidf.fit_transform(X_train['description'])
-    tfidf_valid = tfidf.transform(X_valid['description'])
-    tfidf_test = tfidf.transform(X_test['description'])
+#with timer('CountVec'):
+count_vec = CountVectorizer(ngram_range=(1, 2),
+                        max_features=100000,
+                        token_pattern='\w+',
+                        encoding='KOI8-R')
+countvec_train = count_vec.fit_transform(X_train['description'])
+countvec_valid = count_vec.transform(X_valid['description'])
+countvec_test = count_vec.transform(X_test['description'])
+
+#with timer('TFIDF'):
+tfidf = TfidfVectorizer(ngram_range=(1, 2),
+                        max_features=100000,
+                        token_pattern='\w+',
+                        encoding='KOI8-R')
+tfidf_train = tfidf.fit_transform(X_train['description'])
+tfidf_valid = tfidf.transform(X_valid['description'])
+tfidf_test = tfidf.transform(X_test['description'])
+
+print(X_train.shape)
+#print(X_train.head(2))
+
+#with timer('Dummy'):
+dummy_cols = ['parent_category_name', 'category_name', 'user_type', 'image_top_1', 'wday', 'region', 'city']
+for col in dummy_cols:
+    le = LabelEncoder()
+    le.fit(X_train[col] + X_valid[col] + X_test[col])
+    le.fit(list(X_train[col].values.astype('str')) + list(X_valid[col].values.astype('str')) + list(X_test[col].values.astype('str')))
+    X_train[col] = le.transform(list(X_train[col].values.astype('str')))
+    X_valid[col] = le.transform(list(X_valid[col].values.astype('str')))
+    X_test[col] = le.transform(list(X_test[col].values.astype('str')))
 
 
-with timer('Dummy'):
-    dummy_cols = ['parent_category_name', 'category_name', 'user_type', 'image_top_1', 'wday', 'region', 'city']
-    for col in dummy_cols:
-        le = LabelEncoder()
-        le.fit(X_train[col] + X_valid[col] + X_test[col])
-        le.fit(list(X_train[col].values.astype('str')) + list(X_valid[col].values.astype('str')) + list(X_test[col].values.astype('str')))
-        X_train[col] = le.transform(list(X_train[col].values.astype('str')))
-        X_valid[col] = le.transform(list(X_valid[col].values.astype('str')))
-        X_test[col] = le.transform(list(X_test[col].values.astype('str')))
+#with timer('Dropping'):
+X_train.drop('description', axis=1, inplace=True)
+X_valid.drop('description', axis=1, inplace=True)
+X_test.drop('description', axis=1, inplace=True)
 
-with timer('Dropping'):
-    X_train.drop('description', axis=1, inplace=True)
-    X_valid.drop('description', axis=1, inplace=True)
-    X_test.drop('description', axis=1, inplace=True)
 
-with timer('OHE'):
-    ohe = OneHotEncoder(categorical_features=[X_train.columns.get_loc(c) for c in dummy_cols])
-    X_train = ohe.fit_transform(X_train)
-    print(f'X_train: {X_train.shape}')
-    X_valid = ohe.transform(X_valid)
-    print(f'X_valid: {X_valid.shape}')
-    X_test = ohe.transform(X_test)
-    print(f'X_test: {X_test.shape}')
+#with timer('OHE'):
+ohe = OneHotEncoder(categorical_features=[X_train.columns.get_loc(c) for c in dummy_cols])
+X_train = ohe.fit_transform(X_train)
+#print(f'X_train: {X_train.shape}')
+X_valid = ohe.transform(X_valid)
+#print(f'X_valid: {X_valid.shape}')
+X_test = ohe.transform(X_test)
+#print(f'X_test: {X_test.shape}')
 
+print(X_train.shape)
+'''
 def huber_loss(y_true, y_pred, clip_delta=1.0):
     error = y_true - y_pred
     cond  = tf.keras.backend.abs(error) < clip_delta
