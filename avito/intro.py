@@ -842,7 +842,7 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 
 
-
+'''
 #++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #https://www.kaggle.com/classtag/extract-avito-image-features-via-keras-vgg16
 
@@ -939,12 +939,13 @@ print(res2.shape)
 #print(res2)
 img.show()
 
-
-
-
-
-
 '''
+
+
+
+
+
+
 #+++++++++++++++++++++++++++++++++++++++++++++++ Boosting MLP +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #https://www.kaggle.com/peterhurford/boosting-mlp-lb-0-2297
@@ -976,40 +977,54 @@ def timer(name):
     #print(f'[{name}] done in {time.time() - t0:.0f} s')
     print('{} done in {}'.format(name,time.time() - t0))
 
+print(timer("Keras"))
+
 #with timer('reading data'):
-#    train = pd.read_csv('../input/train.csv')
-#    test = pd.read_csv('../input/test.csv')
+#    train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(300)
+#    test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(50)
 
 
 print("\nData Load Stage")
-train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(2500)
-test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(500)
+train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(300)
+test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(50)
+
 
 print(train.shape)
-#print(train.head(2))
+print(train.head(2))
+
 
 #with timer('imputation'):
 train['param_1'].fillna('missing', inplace=True)
 test['param_1'].fillna('missing', inplace=True)
+
 train['param_2'].fillna('missing', inplace=True)
 test['param_2'].fillna('missing', inplace=True)
+
 train['param_3'].fillna('missing', inplace=True)
 test['param_3'].fillna('missing', inplace=True)
+
 train['image_top_1'].fillna(0, inplace=True)
 test['image_top_1'].fillna(0, inplace=True)
+
 train['price'].fillna(0, inplace=True)
 test['price'].fillna(0, inplace=True)
+
 train['price'] = np.log1p(train['price'])
 test['price'] = np.log1p(test['price'])
+
 price_mean = train['price'].mean()
 price_std = train['price'].std()
+
 train['price'] = (train['price'] - price_mean) / price_std
 test['price'] = (test['price'] - price_mean) / price_std
+
 train['description'].fillna('', inplace=True)
 test['description'].fillna('', inplace=True)
+
 # City names are duplicated across region, HT: Branden Murray https://www.kaggle.com/c/avito-demand-prediction/discussion/55630#321751
 train['city'] = train['city'] + '_' + train['region']
 test['city'] = test['city'] + '_' + test['region']
+
 
 #with timer('add new features'):
 cat_cols = ['region', 'city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
@@ -1022,8 +1037,8 @@ for c in cat_cols:
         test = pd.merge(test, enc, how='left', on=c)
 del(enc)
 
-#print(train.shape)
-#print(train.head(2))
+print(train.shape)
+print(train.head(2))
 
 
 from sklearn.model_selection import train_test_split
@@ -1046,12 +1061,10 @@ def preprocess(df):
     col = [c for c in df.columns if c not in ex_col]
     return df[col]
 
-##df = df[col]
-##print(df.shape)
-##print(df.head(2))
-
-
-
+df = preprocess(train)
+print(df.shape)
+print(df.head(2))
+'''
 #with timer('process train'):
 train, valid = train_test_split(train, test_size=0.05, shuffle=True, random_state=37)
 y_train = train['deal_probability'].values
