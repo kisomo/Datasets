@@ -842,7 +842,7 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 
 
-'''
+
 #++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #https://www.kaggle.com/classtag/extract-avito-image-features-via-keras-vgg16
 
@@ -887,7 +887,6 @@ import numpy as np
 model = VGG16(weights='imagenet', include_top=False)
 model.summary()
 
-
 #!ls ../input/avito-demand-prediction/
 #import zipfile
 #myzip = zipfile.ZipFile('../input/avito-demand-prediction/train_jpg.zip')
@@ -910,22 +909,37 @@ img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files
 
 img = image.load_img(img_path, target_size=(224, 224))
 
-img
-
+#print(img.shape)
 
 x = image.img_to_array(img)  # 3 dims(3, 224, 224)
 x = np.expand_dims(x, axis=0)  # 4 dims(1, 3, 224, 224)
 x = preprocess_input(x)
+print(x.shape)
 
 features = model.predict(x)
+print(features.shape)
 
-features.reshape((25088,))
+feat = features.reshape((25088,))
+print(feat.shape)
 
-print(features)
+c = 784
+n = 32
+k =10
 
+feat2 = feat.reshape(n,c)
+print(feat2.shape)
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=k)
+res = pca.fit_transform(feat2)
+print(res.shape)
+
+res2 = res.reshape((n*k,))
+print(res2.shape)
+#print(res2)
 img.show()
 
-'''
+
 
 
 
@@ -1385,7 +1399,7 @@ submission.head()
 
 
 
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#++++++++++++++++++++++++++++++++++++ Russian word embedding +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #https://www.kaggle.com/gunnvant/russian-word-embeddings-for-fun-and-for-profit
 
@@ -1396,7 +1410,7 @@ import glob
 import nltk
 import gensim
 
-
+'''
 train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(2500)
 test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(500)
 
@@ -1404,10 +1418,12 @@ print(train.head(2))
 
 from gensim.models import KeyedVectors
 
-'''
+print("here we are")
+
 ru_model = KeyedVectors.load_word2vec_format('/home/terrence/CODING/Python/MODELS/AvitoData/wiki.ru.vec')
 
 print("The size of vocabulary for this corpus is {}".format(len(ru_model.vocab)))
+
 
 # Pick a word 
 find_similar_to = 'Автомобили'.lower()
