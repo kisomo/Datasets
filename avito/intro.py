@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #https://www.kaggle.com/nicapotato/simple-catboost
 
+'''
 import numpy as np
 import pandas as pd
 
@@ -25,7 +26,7 @@ from sklearn import preprocessing
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-'''
+
 
 print("\nData Load Stage")
 training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
@@ -276,7 +277,7 @@ submission.to_csv('FastText_one.csv')
 
 
 
-
+'''
 #print("+++++++++++++++++++++++++++++++++++++++++++++ xgboost+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 #https://www.kaggle.com/wolfgangb33r/avito-prediction-xgboost-simple
 
@@ -295,7 +296,7 @@ import random
 
 import xgboost as xgb
 
-'''
+
 def print_duration (start_time, msg):
     print("[%d] %s" % (int(time.time() - start_time), msg))
     start_time = time.time()
@@ -478,7 +479,7 @@ if __name__ == '__main__':
 
 
 
-
+'''
 print("++++++++++++++++++++++++++++++++++++++++++++++++++ lightGBM +++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 #https://www.kaggle.com/him4318/avito-lightgbm-with-ridge-feature-v-2-0/code
@@ -516,7 +517,7 @@ import matplotlib.pyplot as plt
 import re
 import string
 
-'''
+
 
 NFOLDS = 5
 SEED = 42
@@ -950,7 +951,7 @@ img.show()
 #+++++++++++++++++++++++++++++++++++++++++++++++ Boosting MLP +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #https://www.kaggle.com/peterhurford/boosting-mlp-lb-0-2297
-
+'''
 import gc
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
@@ -978,9 +979,7 @@ def timer(name):
     #print(f'[{name}] done in {time.time() - t0:.0f} s')
     print('{} done in {}'.format(name,time.time() - t0))
 
-print(timer("Keras"))
 
-'''
 #with timer('reading data'):
 #    train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(300)
 #    test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(50)
@@ -1426,11 +1425,12 @@ submission.head()
 
 
 
-'''
+
 #++++++++++++++++++++++++++++++++++++ Russian word embedding +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #https://www.kaggle.com/gunnvant/russian-word-embeddings-for-fun-and-for-profit
 
+'''
 import os
 import pandas as pd
 import numpy as np
@@ -1504,6 +1504,7 @@ print(train_desc_features.shape)
 
 # ref: https://github.com/pjankiewicz/mercari-solution/blob/master/mercari_golf.py
 
+'''
 import gc
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
@@ -1528,7 +1529,7 @@ from scipy.sparse import vstack
 from nltk.corpus import stopwords
 sw = stopwords.words('russian')
 
-'''
+
 @contextmanager
 def timer(name):
     t0 = time.time()
@@ -1655,7 +1656,7 @@ if __name__ == '__main__':
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #https://www.kaggle.com/dicksonchin93/xgb-with-mean-encode-tfidf-feature-0-232
-
+'''
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
@@ -1664,7 +1665,7 @@ pd.set_option('display.float_format', lambda x: '%.5f' % x)
 
 # Input data files are available in the "../input/" directory.
 # For example, running this (by clicking run or pressing Shift+Enter) will list the files in the input directory
-'''
+
 import os
 print(os.listdir("/home/terrence/CODING/Python/MODELS/AvitoData"))
 
@@ -1881,11 +1882,18 @@ plot_importance(model)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++ Mwisho kabisa +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+import pandas as pd
+import numpy as np
+import xgboost as xgb
+
+
 print("\nData Load Stage")
-training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
+training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id",
+ parse_dates = ["activation_date"]) #.sample(100)
 traindex = training.index
 #print(traindex)
-testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
+testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id",
+ parse_dates = ["activation_date"]) #.sample(10)
 testdex = testing.index
 #print(testdex)
 print(training.shape)
@@ -1896,15 +1904,17 @@ y = training.deal_probability.copy()
 training.drop("deal_probability",axis=1, inplace=True)
 print('Train shape: {} Rows, {} Columns'.format(*training.shape))
 print('Test shape: {} Rows, {} Columns'.format(*testing.shape))
-#print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-print(training.head(1))
-
+print("+++++++++++++++++++++ step 1 combine train and test ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+#print(training.head(1))
 
 # Combine Train and Test
 df = pd.concat([training,testing],axis=0)
 #del training, testing
 
 print(df.shape)
+#print(df.columns)
+
+print("+++++++++++++++++++++++++ step 2 fill missing entries ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 df['param_1'].fillna('missing', inplace=True)
 df['param_2'].fillna('missing', inplace=True)
@@ -1917,32 +1927,57 @@ price_std = df['price'].std()
 df['price'] = (df['price'] - price_mean) / price_std
 df['description'].fillna('', inplace=True)
 df['city'] = df['city'] + '_' + df['region']
+df.drop("region",axis=1, inplace=True) #TERRENCE
 
 print(df.shape)
+#print(df.columns)
 
+print("+++++++++++++++++++++++++++++++++ step 3 break back to train and test ++++++++++++++++++++++++++++++++++++++++++++++")
 train = df.loc[traindex,:].copy()
-train = pd.concat([train, y], axis=1) 
-print("Training Set shape",train.shape)
+#train = pd.concat([train, y], axis=1) 
+#print("Training Set shape",train.shape)
 test = df.loc[testdex,:].copy()
-print("Submission Set Shape: {} Rows, {} Columns".format(*test.shape))
+#print("Submission Set Shape: {} Rows, {} Columns".format(*test.shape))
 #del df
 #gc.collect()
 
 print(train.shape)
+print(test.shape)
+#print(test.columns)
 
-cat_cols = ['region', 'city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
-num_cols = ['price', 'deal_probability']
+print("+++++++++++++++step 4 feature engineering the train set by the two numerical variables +++++++++++++++++++++++++++++++")
+
+#cat_cols = ['region', 'city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
+cat_cols = ['city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
+num_cols = ['price'] #, 'deal_probability']
 for c in cat_cols:
     for c2 in num_cols:
         enc = train.groupby(c)[c2].agg(['mean']).astype(np.float32).reset_index()
+        enc2 = test.groupby(c)[c2].agg(['mean']).astype(np.float32).reset_index() #TERRENCE
         enc.columns = ['_'.join([str(c), str(c2), str(c3)]) if c3 != c else c for c3 in enc.columns]
+        enc2.columns = ['_'.join([str(c), str(c2), str(c3)]) if c3 != c else c for c3 in enc2.columns] #TERRENCE
         train = pd.merge(train, enc, how='left', on=c)
+        test = pd.merge(test, enc2, how='left', on=c)
 del(enc)
+del(enc2)
 
 print(train.shape)
+print(test.shape)
+#print(train.columns)
 
+
+print("+++++++++++++++++++++++++++++ step 5 training and validation split +++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 from sklearn.model_selection import train_test_split
-##df = train
+
+# Training and Validation Set
+
+#X_train, X_valid, y_train, y_valid = train_test_split(train,y, test_size=0.010, random_state=23)
+X_train = train
+y_train = y 
+
+print("++++++++++++++++++++ step 6 feature engineering on categorical variables ++++++++++++++++++++++++++++++++++++++++++++")
+
+
 #def preprocess(df: pd.DataFrame) -> pd.DataFrame:
 def preprocess(df):
     df.is_copy = False
@@ -1962,16 +1997,17 @@ def preprocess(df):
     col = [c for c in df.columns if c not in ex_col]
     return df[col]
 
-data_1 = preprocess(train)
-print(data_1.shape)
-#print(df.head(2))
-
-# Training and Validation Set
-X_train, X_valid, y_train, y_valid = train_test_split(train, y, test_size=0.10, random_state=23)
 
 X_train = preprocess(X_train)
-X_valid = preprocess(X_valid)
+#X_valid = preprocess(X_valid)
 X_test = preprocess(test)
+
+print(X_train.shape)
+#print(X_valid.shape)
+print(X_test.shape)
+
+#print(X_train.columns)
+
 
 '''
 desc_len_mean = X_train['description_len'].mean()
@@ -2011,90 +2047,177 @@ X_valid['image_top_1'] = (X_valid['image_top_1'] - image_top_1_mean) / image_top
 X_test['image_top_1'] = (X_test['image_top_1'] - image_top_1_mean) / image_top_1_std
 '''
 
+
+
 # I don't know why I need to fill NA a second time, but alas here we are...
-X_train.fillna(0, inplace=True)
-X_valid.fillna(0, inplace=True)
-X_test.fillna(0, inplace=True)
+#X_train.fillna(0, inplace=True)
+#X_valid.fillna(0, inplace=True)
+#X_test.fillna(0, inplace=True)
 
-print(X_train.columns)
-print(X_train.shape)
-print(X_valid.shape)
-print(X_test.shape)
+#print(X_train.columns)
 
+print("+++++++++++++++++++++++++++++++++ vectorize the datasets ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
 
-'''
+
 # CountVec
-count_vec = CountVectorizer(ngram_range=(1, 2),
-                        max_features=100000,
-                        token_pattern='\w+',
-                        encoding='KOI8-R')
-countvec_train = count_vec.fit_transform(X_train['description'])
-countvec_valid = count_vec.transform(X_valid['description'])
-countvec_test = count_vec.transform(X_test['description'])
+##count_vec = CountVectorizer(ngram_range=(1, 2),
+##                        max_features=100000,
+##                        token_pattern='\w+',
+##                        encoding='KOI8-R')
+##countvec_train = count_vec.fit_transform(X_train['description'])
+##countvec_valid = count_vec.transform(X_valid['description'])
+##countvec_test = count_vec.transform(X_test['description'])
 
 #print(X_train.columns)
 
 #   TFIDF
-tfidf = TfidfVectorizer(ngram_range=(1, 2),
-                        max_features=100000,
-                        token_pattern='\w+',
-                        encoding='KOI8-R')
-tfidf_train = tfidf.fit_transform(X_train['description'])
-tfidf_valid = tfidf.transform(X_valid['description'])
-tfidf_test = tfidf.transform(X_test['description'])
-'''
+##tfidf = TfidfVectorizer(ngram_range=(1, 2),
+##                        max_features=100000,
+##                        token_pattern='\w+',
+##                        encoding='KOI8-R')
+##tfidf_train = tfidf.fit_transform(X_train['description'])
+##tfidf_valid = tfidf.transform(X_valid['description'])
+##tfidf_test = tfidf.transform(X_test['description'])
+
 
 from nltk.corpus import stopwords
 stopWords = stopwords.words('russian')
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-n_features = 100
+n_features = 300
 
+countvec = CountVectorizer(max_features=n_features, stop_words = stopWords)
 tfidf = TfidfVectorizer(max_features=n_features, stop_words = stopWords)
 
-tfidf_train = np.array(tfidf.fit_transform(X_train['description']).todense(), dtype=np.float16)
-tfidf_valid = np.array(tfidf.fit_transform(X_valid['description']).todense(), dtype=np.float16)
-tfidf_test = np.array(tfidf.fit_transform(X_test['description']).todense(), dtype=np.float16)
+countvec_train = np.array(countvec.fit_transform(X_train['description']).todense(), dtype=np.float16)
+#countvec_valid = np.array(countvec.fit_transform(X_valid['description']).todense(), dtype=np.float16)
+countvec_test = np.array(countvec.fit_transform(X_test['description']).todense(), dtype=np.float16)
 
-#X_train.is_copy = False
+#tfidf_train = np.array(tfidf.fit_transform(X_train['description']).todense(), dtype=np.float16)
+##tfidf_valid = np.array(tfidf.fit_transform(X_valid['description']).todense(), dtype=np.float16)
+#tfidf_test = np.array(tfidf.fit_transform(X_test['description']).todense(), dtype=np.float16)
+
+X_train.is_copy = False
+
+X_test.is_copy = False
 
 for i in range(n_features):
-    X_train['tfidf_' + str(i)] = tfidf_train[:, i]
-    X_valid['tfidf_' + str(i)] = tfidf_valid[:, i]
-    X_test['tfidf_' + str(i)] = tfidf_test[:, i]
+    X_train['countvec_' + str(i)] = countvec_train[:, i]
+    #X_valid['countvec_' + str(i)] = countvec_valid[:, i]
+    X_test['countvec_' + str(i)] = countvec_test[:, i]
+
+#for i in range(n_features):
+#    X_train['tfidf_' + str(i)] = tfidf_train[:, i]
+#    X_valid['tfidf_' + str(i)] = tfidf_valid[:, i]
+#    X_test['tfidf_' + str(i)] = tfidf_test[:, i]
 
 #new_data = data.drop(['user_id','description','image','parent_category_name','region',
 #                      'item_id','param_1','param_2','param_3','title'], axis=1)
 
-X_train.drop(['description','parent_category_name','category_name'],axis =1) #,'param_1','param_2','param_3','title'], axis=1)
-X_valid.drop(['description','parent_category_name','category_name'],axis =1) #,'param_1','param_2','param_3','title'], axis=1)
-X_test.drop(['description','parent_category_name','category_name'],axis =1) #,'param_1','param_2','param_3','title'], axis=1)
+#region, city, parent_category_name, category_name, description, user_type
+
+X_train = X_train.drop(['description','parent_category_name','category_name','city','user_type'],axis =1 ) #,'param_1','param_2','param_3','title'], axis=1,inplace=True)
+#X_valid = X_valid.drop(['description','parent_category_name','category_name','city','user_type'],axis =1) #,'param_1','param_2','param_3','title'], axis=1)
+X_test = X_test.drop(['description','parent_category_name','category_name','city','user_type'],axis =1) #,'param_1','param_2','param_3','title'], axis=1)
 
 #X_train.drop('description', axis=1, inplace=True)
 #X_valid.drop('description', axis=1, inplace=True)
 #X_test.drop('description', axis=1, inplace=True)
 
 print(X_train.shape)
-print(X_valid.shape)
+#print(X_valid.shape)
 print(X_test.shape)
 
+print(X_train.columns)
+#print(X_train.head(2))
+print("=========================================")
+print(X_test.columns)
+
+
+
 #---------------- XGBoost ----------------------------
+
 # create a xgboost model
-model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=3)
+model = xgb.XGBRegressor(n_estimators=300, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=10)
+
+# start training
+#train_X = train.as_matrix(columns=['user_id', 'price', 'region', 'city', 'parent_category_name', 'category_name', 'user_type', 'description'])
+
+#train_X = X_train.as_matrix()
+
+#model.fit(train_X, y_train)
+model.fit(X_train, y_train)
+
+#test_X = X_test.as_matrix()
+#test_X1 = np.array(test_X.reshape(test_X.size), copy=False) #, dtype=np.float32)
+pred = model.predict(X_test)
+
+submission = pd.read_csv("/home/terrence/CODING/Python/MODELS/AvitoData/sample_submission.csv")
+submission['deal_probability'] = pred
+submission['deal_probability'].clip(0.0, 1.0, inplace=True)
+print(submission[submission['deal_probability'] > 0])
+submission.to_csv("xgb_mwisho_one.csv", index=False)
+#submission.to_csv("xgb_mwisho_trash.csv", index=False)
+
+'''
+catpred = cb_model.predict(test)
+catsub = pd.DataFrame(catpred,columns=["deal_probability"],index=testdex)
+catsub['deal_probability'].clip(0.0, 1.0, inplace=True)
+catsub.to_csv("catsub_two.csv",index=True,header=True) # Between 0 and 1
+print("Model Runtime: %0.2f Minutes"%((time.time() - modelstart)/60))
+print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
+
+'''
+
+
+'''
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dvalid = xgb.DMatrix(X_valid, label=y_valid)
+dtest = xgb.DMatrix(X_test) #, label=y_test)
 
 model.fit(X_train, y_train, eval_set=(X_valid,y_valid))
-
-# predict the propabilities for binary classes    
+#model.fit(dtrain, eval_set = dvalid)
+   
 pred = model.predict(X_test)
-     
+#pred = model.predict(dtest)
+
 submission = pd.read_csv("/home/terrence/CODING/Python/MODELS/AvitoData/sample_submission.csv")
 submission['deal_probability'] = pred
 print(submission[submission['deal_probability'] > 0])
-submission.to_csv("xgb_mwisho_one.csv", index=False)
+#submission.to_csv("xgb_mwisho_one.csv", index=False)
+'''
 
+'''
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dtest = xgb.DMatrix(X_test, label=y_test)
 
+param = {
+    'max_depth': 3,  # the maximum depth of each tree
+    'eta': 0.3,  # the training step for each iteration
+    'silent': 1,  # logging mode - quiet
+    'objective': 'multi:softprob',  # error evaluation for multiclass training
+    'num_class': 3}  # the number of classes that exist in this dataset
+num_round = 500  # the number of training iterations
+
+bst = xgb.train(param, dtrain, num_round)
+
+bst.dump_model('dump.raw.txt')
+
+preds = bst.predict(dtest)
+preds = bst.predict(dtest)
+#print(preds)
+
+import numpy as np
+best_preds = np.asarray([np.argmax(line) for line in preds])
+
+from sklearn.metrics import precision_score
+
+xgb_score = precision_score(y_test, best_preds, average='macro')
+print("XGB score = {:.4f} " .format(xgb_score))
+
+'''
 
 
 
