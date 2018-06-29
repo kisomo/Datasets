@@ -943,9 +943,72 @@ img.show()
 
 '''
 
+#++++++++++++++++++++++++++++++++++++++++++++++++ image features +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#https://www.kaggle.com/sukhyun9673/extracting-image-features-test
+
+#Thanks to Nooh, who gave an inspiration of im KP extraction : https://www.kaggle.com/c/avito-demand-prediction/discussion/59414#348151
+
+import os
+from zipfile import ZipFile
+import cv2
+import numpy as np
+import pandas as pd
+#from dask import bag, threaded
+#from dask.diagnostics import ProgressBar
+import matplotlib.pyplot as plt
+from keras.preprocessing import image
+
+
+#image_path = "data/competition_files/test_jpg/"
+def keyp(img):
+    try:        
+        img = image_path + str(img) + ".jpg"
+        exfile = zipped.read(img)
+        arr = np.frombuffer(exfile, np.uint8)
+
+        imz = cv2.imdecode(arr, 1)
+        fast = cv2.FastFeatureDetector_create()
+
+    # find and draw the keypoints
+        kp = fast.detect(imz,None)
+        kp =len(kp)
+        return kp
+    except:
+        return 0
+
+#test = pd.read_csv("../input/test.csv")
+
+img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
+
+#tes = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/*.jpg')
+img = image.load_img(img_path, target_size=(224, 224))
+img.show()
+
+image_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg'
+x = '856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2' 
+print(keyp(x))
+
+image_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/test_jpg'
+x = '856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2' 
+print(keyp(x))
 
 
 
+
+
+'''
+images = test[["image"]].drop_duplicates().dropna()
+zipped = ZipFile('../input/test_jpg.zip')
+
+images["Image_kp_score"] = images["image"].apply(lambda x: keyp(x))
+
+
+
+
+images.to_csv("Image_KP_SCORES_test.csv", index = False)
+
+
+'''
 
 
 #+++++++++++++++++++++++++++++++++++++++++++++++ Boosting MLP +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1493,11 +1556,6 @@ print(train_desc_features.shape)
 
 
 
-
-
-
-
-
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #https://www.kaggle.com/paulorzp/tfidf-tensor-starter-lb-0-233
@@ -1899,6 +1957,7 @@ testdex = testing.index
 print(training.shape)
 print(testing.shape)
 
+88
 
 y = training.deal_probability.copy()
 training.drop("deal_probability",axis=1, inplace=True)
@@ -1945,7 +2004,7 @@ print(train.shape)
 print(test.shape)
 #print(test.columns)
 
-print("+++++++++++++++step 4 feature engineering the train set by the two numerical variables +++++++++++++++++++++++++++++++")
+print("+++++step 4 feature engineering the train and test by the price numerical variables category average +++++++++++++++++++++++++++++++")
 
 #cat_cols = ['region', 'city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
 cat_cols = ['city', 'parent_category_name', 'category_name', 'param_1', 'param_2', 'param_3', 'user_type']
@@ -2009,6 +2068,7 @@ print(X_test.shape)
 #print(X_train.columns)
 
 
+
 '''
 desc_len_mean = X_train['description_len'].mean()
 desc_len_std = X_train['description_len'].std()
@@ -2058,7 +2118,7 @@ X_test['image_top_1'] = (X_test['image_top_1'] - image_top_1_mean) / image_top_1
 
 print("+++++++++++++++++++++++++++++++++ vectorize the datasets ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
+#from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
 
 
 # CountVec
@@ -2086,7 +2146,7 @@ from nltk.corpus import stopwords
 stopWords = stopwords.words('russian')
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-n_features = 300
+n_features = 3
 
 countvec = CountVectorizer(max_features=n_features, stop_words = stopWords)
 tfidf = TfidfVectorizer(max_features=n_features, stop_words = stopWords)
@@ -2099,6 +2159,7 @@ countvec_test = np.array(countvec.fit_transform(X_test['description']).todense()
 ##tfidf_valid = np.array(tfidf.fit_transform(X_valid['description']).todense(), dtype=np.float16)
 #tfidf_test = np.array(tfidf.fit_transform(X_test['description']).todense(), dtype=np.float16)
 
+
 X_train.is_copy = False
 
 X_test.is_copy = False
@@ -2110,7 +2171,7 @@ for i in range(n_features):
 
 #for i in range(n_features):
 #    X_train['tfidf_' + str(i)] = tfidf_train[:, i]
-#    X_valid['tfidf_' + str(i)] = tfidf_valid[:, i]
+#    #X_valid['tfidf_' + str(i)] = tfidf_valid[:, i]
 #    X_test['tfidf_' + str(i)] = tfidf_test[:, i]
 
 #new_data = data.drop(['user_id','description','image','parent_category_name','region',
@@ -2140,7 +2201,7 @@ print(X_test.columns)
 #---------------- XGBoost ----------------------------
 
 # create a xgboost model
-model = xgb.XGBRegressor(n_estimators=300, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=10)
+model = xgb.XGBRegressor(n_estimators=5, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=3)
 
 # start training
 #train_X = train.as_matrix(columns=['user_id', 'price', 'region', 'city', 'parent_category_name', 'category_name', 'user_type', 'description'])
@@ -2160,6 +2221,8 @@ submission['deal_probability'].clip(0.0, 1.0, inplace=True)
 print(submission[submission['deal_probability'] > 0])
 submission.to_csv("xgb_mwisho_one.csv", index=False)
 #submission.to_csv("xgb_mwisho_trash.csv", index=False)
+
+
 
 '''
 catpred = cb_model.predict(test)
