@@ -30,11 +30,11 @@ import matplotlib.pyplot as plt
 
 print("\nData Load Stage")
 training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', 
-index_col = "item_id", parse_dates = ["activation_date"]).sample(1000)
+index_col = "item_id", parse_dates = ["activation_date"]).sample(250)
 traindex = training.index
 #print(traindex)
 testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', 
-index_col = "item_id", parse_dates = ["activation_date"]).sample(1000)
+index_col = "item_id", parse_dates = ["activation_date"]).sample(50)
 testdex = testing.index
 #print(testdex)
 print(training.shape)
@@ -70,7 +70,7 @@ df["Day of Month"] = df['activation_date'].dt.day
 df.drop(["activation_date","image"],axis=1,inplace=True)
 print(df.shape)
 #print(df.head(2))
-print(df.dtypes)
+#print(df.dtypes)
 
 
 print("\nEncode Variables")
@@ -85,7 +85,7 @@ for col in categorical + messy_categorical:
     df[col] = lbl.fit_transform(df[col].astype(str))
 
 print(df.head(2))
-  
+
 print("\nCatboost Modeling Stage")
 X = df.loc[traindex,:].copy()
 print("Training Set shape",X.shape)
@@ -107,11 +107,12 @@ def column_index(df, query_cols):
 categorical_features_pos = column_index(X,categorical + messy_categorical)
 print(categorical_features_pos)
 
+#print(df.head(2))
 
 # Train Model
 print("Train CatBoost Decision Tree")
 modelstart= time.time()
-cb_model = CatBoostRegressor(iterations=200,
+cb_model = CatBoostRegressor(iterations=20,
                              learning_rate=0.02,
                              depth=7,
                              eval_metric='RMSE',
@@ -125,6 +126,7 @@ cb_model.fit(X_train, y_train,
              cat_features=categorical_features_pos,
              use_best_model=True,
              verbose=True)
+
 
 # # Feature Importance
 # fea_imp = pd.DataFrame({'imp': cb_model.feature_importances_, 'col': X.columns})
@@ -140,15 +142,15 @@ print('RMSE:', np.sqrt(metrics.mean_squared_error(y_valid, cb_model.predict(X_va
 catpred = cb_model.predict(test)
 catsub = pd.DataFrame(catpred,columns=["deal_probability"],index=testdex)
 catsub['deal_probability'].clip(0.0, 1.0, inplace=True)
-catsub.to_csv("catsub_two.csv",index=True,header=True) # Between 0 and 1
+#catsub.to_csv("catsub_two.csv",index=True,header=True) # Between 0 and 1
 print("Model Runtime: %0.2f Minutes"%((time.time() - modelstart)/60))
 print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
-
 '''
 
-'''
-print("++++++++++++++++++++++++++++++++++++++++++++++++++++ FastText +++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++ FastText +++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+'''
 #https://www.kaggle.com/christofhenkel/fasttext-starter-description-only/code
 
 import pandas as pd
@@ -269,7 +271,8 @@ submission.to_csv('FastText_one.csv')
 
 '''
 
-#+++++++++++++++++++++++++++++++++++++++++++++ xgboost+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+#+++++++++++++++++++++++++++++++++++++++++++++ xgboost++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 '''
 #https://www.kaggle.com/wolfgangb33r/avito-prediction-xgboost-simple
 
@@ -315,6 +318,22 @@ def hash_column (row, col):
         return n_hash(row[col])
     return n_hash('none')
 
+def cleanName(text):
+    try:
+        textProc = text.lower()
+        # textProc = " ".join(map(str.strip, re.split('(\d+)',textProc)))
+        #regex = re.compile(u'[^[:alpha:]]')
+        #textProc = regex.sub(" ", textProc)
+        textProc = re.sub('[!@#$_“”¨«»®´·º½¾¿¡§£₤‘’]', '', textProc)
+        textProc = " ".join(textProc.split())
+        return textProc
+    except: 
+        return "name error"
+    
+
+#df["description"]   = df["description"].apply(lambda x: cleanName(x))
+
+
 train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(2000)
 test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(200)
 
@@ -326,7 +345,8 @@ print(test.shape)
 #print(test.head(2))
 #print(test.dtypes)
 
-from sklearn.cross_validation import train_test_split
+#from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -348,12 +368,12 @@ start_time = time.time()
 # create a xgboost model
 model = xgb.XGBRegressor(n_estimators=2, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=3)
 
-import re
-import string
-re_tok = re.compile(r'([{string.punctuation}“”¨«»®´·º½¾¿¡§£₤‘’])')
+#import re
+#import string
+#re_tok = re.compile(r'([{string.punctuation}“”¨«»®´·º½¾¿¡§£₤‘’])')
 #re_tok = re.compile(r'([{string.punctuation}“”¨«»®´·!\:/()<>=+#[]{}|º½¾¿¡§£₤‘’])')
-def tokenize(s): return re_tok.sub(r'\1', s).split()
-#train['description'] = train['description'].apply(lambda comment: tokenize(comment))
+#def tokenize(s): return re_tok.sub(r'\1', s).split()
+##train['description'] = train['description'].apply(lambda comment: tokenize(comment))
 
 # calculate consistent numeric hashes for any categorical features 
 train['user_id'] = train.apply (lambda row: hash_column (row, 'user_id'),axis=1)
@@ -372,17 +392,46 @@ train['user_type'] = train.apply (lambda row: hash_column (row, 'user_type'),axi
 #train['description'].fillna(0)
 train['description'].fillna('Unknown')
 #train['description'] = count_vectorizer.fit_transform(train['description'].apply(lambda comment: tokenize(comment)))
+train['description'] = count_vectorizer.fit_transform(train['description'].apply(lambda comment: cleanName(comment)))
 train['price'] = np.log(train['price'] + 0.01)
 start_time = print_duration (start_time, "Finished reading")      
-
+cleanName
 print(train.shape)
-#print(train.head(2))
-#print(train.dtypes)
+print(train.head(2))
+print(train.dtypes)
 
 # start training
-train_X = train.as_matrix(columns=['user_id', 'price', 'region', 'city', 'parent_category_name', 'category_name', 'user_type', 'description'])
-model.fit(train_X, train['deal_probability'])
-    
+train_X = train.as_matrix(columns=['user_id', 'price', 'region', 'city', 'parent_category_name', 'category_name',
+ 'user_type', 'description'])
+
+from sklearn import preprocessing 
+for f in train.columns: 
+    if train[f].dtype=='object': 
+        lbl = preprocessing.LabelEncoder() 
+        lbl.fit(list(train[f].values)) 
+        train[f] = lbl.transform(list(train[f].values))
+
+train.fillna((-999), inplace=True) 
+
+train=np.array(train) 
+train = train.astype(float) 
+
+train_data = xgb.DMatrix(train_X, train['deal_probability'])
+#valid_data = xgb.DMatrix(X_va, y_va)
+#del X_tr
+#del X_va
+#del y_tr
+#del y_va
+#gc.collect()
+#watchlist = [(trAin_data, 'train'), (valid_data, 'valid')]
+#model = xgb.train(params, train_data, 1000, watchlist, maximize=False, early_stopping_rounds = 25, verbose_eval=5)
+#X_te = xgb.DMatrix(X_te)
+model.fit(train_data)
+#y_pred = model.predict(X_te, ntree_limit=model.best_ntree_limit)
+
+#model.fit(train_X, train['deal_probability'])
+
+  
 # read test data set
 #test['user_id'] = test.apply (lambda row: hash_column (row, 'user_id'),axis=1)
 test['user_id'] = test.apply (lambda row: hash_column (row, 'user_id'),axis=1)
@@ -401,6 +450,18 @@ test['description'].fillna('Unknown')
 test['description'] = count_vectorizer.fit_transform(test['description'])
 #test['description'] = test.apply (lambda row: hash_column (row, 'description'),axis=1)
 test['price'] = np.log(test['price'] + 0.01)
+
+for f in test.columns: 
+    if test[f].dtype=='object': 
+        lbl = preprocessing.LabelEncoder() 
+        lbl.fit(list(test[f].values)) 
+        test[f] = lbl.transform(list(test[f].values))
+
+test.fillna((-999), inplace=True)
+
+test=np.array(test) 
+test = test.astype(float)
+
 test_X = test.as_matrix(columns=[ 'user_id', 'price', 'region', 'city', 'parent_category_name', 'category_name', 'user_type', 'description'])
 
 start_time = print_duration (start_time, "Finished training, start prediction")   
@@ -473,8 +534,8 @@ if __name__ == '__main__':
 '''
 
 
-#++++++++++++++++++++++++++++++++++++++++++++++++++ lightGBM +++++++++++++++++++++++++++++++++++++++++++++++++++")
-
+#++++++++++++++++++++++++++++++++++++++++++++++++++ lightGBM ++++++++++++++++++++++++++++++++++++++++++++++++++
+'''
 #https://www.kaggle.com/him4318/avito-lightgbm-with-ridge-feature-v-2-0/code
 
 import time
@@ -665,14 +726,15 @@ tfidf_para = {
     "sublinear_tf": True,
     "dtype": np.float32,
     "norm": 'l2',
-    #"min_df":5,
-    #"max_df":.9,
+    "min_df":5,
+    "max_df":.9,
     "smooth_idf":False
 }
 
 
 def get_col(col_name): return lambda x: x[col_name]
 ##I added to the max_features of the description. It did not change my score much but it may be worth investigating
+
 vectorizer = FeatureUnion([
         ('description',TfidfVectorizer( ngram_range=(1, 2),
          max_features=17000, 
@@ -681,7 +743,7 @@ vectorizer = FeatureUnion([
         ('title',CountVectorizer(
             ngram_range=(1, 2),
             stop_words = russian_stop,
-            #max_features=7000,
+            max_features=7000,
             preprocessor=get_col('title')))
     ])
     
@@ -689,20 +751,20 @@ start_vect=time.time()
 
 import sys
 reload(sys)
-sys.setdefaultencoding('utf-8')
-sys.setdefaultencoding('ascii')
+#sys.setdefaultencoding('utf-8')
+#sys.setdefaultencoding('ascii')
 
 print(df.shape)
 
 #Fit my vectorizer on the entire dataset instead of the training rows
 #Score improved by .0001
 #vectorizer.fit(df.to_dict('records'))
-vectorizer.fit(df)
+#vectorizer.fit(df)
 
 ready_df = vectorizer.transform(df.to_dict('records'))
 tfvocab = vectorizer.get_feature_names()
 print("Vectorization Runtime: %0.2f Minutes"%((time.time() - start_vect)/60))
-'''
+
 # Drop Text Cols
 textfeats = ["description", "title"]
 df.drop(textfeats, axis=1,inplace=True)
@@ -827,7 +889,7 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 #++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-'''
+
 #https://www.kaggle.com/classtag/extract-avito-image-features-via-keras-vgg16
 
 import numpy as np # linear algebra
@@ -863,11 +925,11 @@ from os.path import join, exists, expanduser
 #!ls ~/.keras/models
 
 
-from keras.preprocessing import image
-from keras.applications.vgg16 import VGG16
+#from keras.preprocessing import image
+#from keras.applications.vgg16 import VGG16
 from keras.applications.vgg16 import preprocess_input
 import numpy as np
-
+print("----------------- VGG16 summary -----------")
 model = VGG16(weights='imagenet', include_top=False)
 model.summary()
 
@@ -884,8 +946,8 @@ model.summary()
 #!ls 856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/
 
 #img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
-img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
-
+#img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
+img_path = '/home/terrence/Desktop/PHONE/Camera/20140218_170332.jpg'
 #tes = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/*.jpg')
 
 #print(test.shape)
@@ -920,10 +982,10 @@ print(res.shape)
 
 res2 = res.reshape((n*k,))
 print(res2.shape)
-#print(res2)
+
+print(res2)
 img.show()
 
-'''
 
 #++++++++++++++++++++++++++++++++++++++++++++++++ image features +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 '''
