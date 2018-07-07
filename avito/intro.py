@@ -980,7 +980,7 @@ pca = PCA(n_components=k)
 res = pca.fit_transform(feat2)
 print(res.shape)
 
-res2 = res.reshape((n*k,))
+res2 = res.reshape((-1,n*k))
 print(res2.shape)
 
 print(res2)
@@ -988,7 +988,7 @@ img.show()
 '''
 
 #++++++++++++++++++++++++++++++++++++++++++++++++ image features +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+'''
 #https://www.kaggle.com/sukhyun9673/extracting-image-features-test
 
 #Thanks to Nooh, who gave an inspiration of im KP extraction : https://www.kaggle.com/c/avito-demand-prediction/discussion/59414#348151
@@ -1029,12 +1029,11 @@ print(keyp(x))
 #test = pd.read_csv("../input/test.csv")
 
 img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
-
-test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/test_jpg')
-print(test.dtypes)
-'''
 img = image.load_img(img_path, target_size=(224, 224))
 img.show()
+
+#test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/test_jpg')
+#print(test.dtypes)
 
 image_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg'
 x = '856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2' 
@@ -1044,10 +1043,22 @@ image_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_fil
 x = '856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2' 
 print(keyp(x))
 
-images = test[["image"]].drop_duplicates().dropna()
-zipped = ZipFile('../input/test_jpg.zip')
+test = pd.read_csv("/home/terrence/CODING/Python/MODELS/AvitoData/test.csv").sample(2500)
+print(test.shape)
+print(test.head(2))
+#print(test.dtypes)
 
-images["Image_kp_score"] = images["image"].apply(lambda x: keyp(x))
+#images = test[["image"]].drop_duplicates().dropna()
+#print(images.shape)
+
+#zipped = ZipFile('../input/test_jpg.zip')
+
+#images["Image_kp_score"] = images["image"].apply(lambda x: keyp(x))
+test["Image_kp_score"] = test["image"].apply(lambda x: keyp(x))
+print(test.shape)
+print(test.head(2))
+print(test.dtypes)
+print(np.unique(test["Image_kp_score"]))
 
 images.to_csv("Image_KP_SCORES_test.csv", index = False)
 '''
