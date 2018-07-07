@@ -889,7 +889,7 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 #++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
+'''
 #https://www.kaggle.com/classtag/extract-avito-image-features-via-keras-vgg16
 
 import numpy as np # linear algebra
@@ -985,10 +985,10 @@ print(res2.shape)
 
 print(res2)
 img.show()
-
+'''
 
 #++++++++++++++++++++++++++++++++++++++++++++++++ image features +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-'''
+
 #https://www.kaggle.com/sukhyun9673/extracting-image-features-test
 
 #Thanks to Nooh, who gave an inspiration of im KP extraction : https://www.kaggle.com/c/avito-demand-prediction/discussion/59414#348151
@@ -1005,6 +1005,8 @@ from keras.preprocessing import image
 
 
 #image_path = "data/competition_files/test_jpg/"
+image_path = "/home/terrence/Desktop/PHONE/Camera/"
+
 def keyp(img):
     try:        
         img = image_path + str(img) + ".jpg"
@@ -1021,11 +1023,16 @@ def keyp(img):
     except:
         return 0
 
+x = '20140218_170332' 
+print(keyp(x))
+
 #test = pd.read_csv("../input/test.csv")
 
 img_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2.jpg'
 
-#tes = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/train_jpg/*.jpg')
+test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_files/test_jpg')
+print(test.dtypes)
+'''
 img = image.load_img(img_path, target_size=(224, 224))
 img.show()
 
@@ -1037,20 +1044,13 @@ image_path = '/home/terrence/CODING/Python/MODELS/AvitoData/data/competition_fil
 x = '856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2' 
 print(keyp(x))
 
-
 images = test[["image"]].drop_duplicates().dropna()
 zipped = ZipFile('../input/test_jpg.zip')
 
 images["Image_kp_score"] = images["image"].apply(lambda x: keyp(x))
 
-
-
-
 images.to_csv("Image_KP_SCORES_test.csv", index = False)
-
-
 '''
-
 
 #+++++++++++++++++++++++++++++++++++++++++++++++ Boosting MLP +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
