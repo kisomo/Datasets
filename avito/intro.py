@@ -29,10 +29,12 @@ import matplotlib.pyplot as plt
 
 
 print("\nData Load Stage")
-training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
+training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', 
+index_col = "item_id", parse_dates = ["activation_date"]).sample(1000)
 traindex = training.index
 #print(traindex)
-testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"])#.sample(1000)
+testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', 
+index_col = "item_id", parse_dates = ["activation_date"]).sample(1000)
 testdex = testing.index
 #print(testdex)
 print(training.shape)
@@ -144,9 +146,6 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 '''
 
-
-
-
 '''
 print("++++++++++++++++++++++++++++++++++++++++++++++++++++ FastText +++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
@@ -170,29 +169,26 @@ EMBEDDING_FILE = '/home/terrence/CODING/Python/MODELS/AvitoData/cc.ru.300.vec'
 TRAIN_CSV = '/home/terrence/CODING/Python/MODELS/AvitoData/train.csv'
 TEST_CSV = '/home/terrence/CODING/Python/MODELS/AvitoData/test.csv'
 
-
 max_features = 100000
 maxlen = 100
 embed_size = 300
 
 train = pd.read_csv(TRAIN_CSV, index_col = 0)
 print(train.shape)
-print(train.head(2))
+#print(train.head(2))
 labels = train[['deal_probability']].copy()
 train = train[['description']].copy()
 
-#emb = pd.read_csv(EMBEDDING_FILE, index_col = 0)
-#print(emb.shape)
-#print(emb.head(2))
+emb = pd.read_csv(EMBEDDING_FILE, index_col = 0)
+print(emb.shape)
 
+#print(emb.head(2))
 
 tokenizer = text.Tokenizer(num_words=max_features)
 print('fitting tokenizer')
 
-
 train['description'] = train['description'].astype(str)
 tokenizer.fit_on_texts(list(train['description'].fillna('NA').values))
-
 
 print('getting embeddings')
 def get_coefs(word, *arr): return word, np.asarray(arr, dtype='float32')
@@ -271,14 +267,10 @@ submission = sample_submission.copy()
 submission['deal_probability'] = prediction
 submission.to_csv('FastText_one.csv')
 
-
 '''
 
-
-
-
+#+++++++++++++++++++++++++++++++++++++++++++++ xgboost+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 '''
-#print("+++++++++++++++++++++++++++++++++++++++++++++ xgboost+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 #https://www.kaggle.com/wolfgangb33r/avito-prediction-xgboost-simple
 
 # Simple first attempt to predict the propability of demand
@@ -302,8 +294,9 @@ def print_duration (start_time, msg):
     start_time = time.time()
     return start_time
 
-#start_time = time.time()
-#print_duration(start_time, "Just Testing") 
+
+start_time = time.time()
+print_duration(start_time, "Just Testing") 
 
 msg = "Just Testing"
 # quick way of calculating a numeric has for a string
@@ -311,11 +304,10 @@ def n_hash(s):
     random.seed(hash(s))
     return random.random()
 
-#print(n_hash(msg))
-#print(hash(msg))
-#print(random.seed(hash(msg)))
-#print(random.random())
-
+print(n_hash(msg))
+print(hash(msg))
+print(random.seed(hash(msg)))
+print(random.random())
 
 # hash a complete column of a pandas dataframe    
 def hash_column (row, col):
@@ -323,14 +315,14 @@ def hash_column (row, col):
         return n_hash(row[col])
     return n_hash('none')
 
-train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv')
-test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv')
+train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(2000)
+test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(200)
 
-#print(train.shape)
+print(train.shape)
 #print(train.head(2))
 #print(train.dtypes)
 
-#print(test.shape)
+print(test.shape)
 #print(test.head(2))
 #print(test.dtypes)
 
@@ -339,24 +331,29 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from nltk.corpus import stopwords
+stopWords = stopwords.words('russian')
+
+#from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+#n_features = 3
+#countvec = CountVectorizer(max_features=n_features, stop_words = stopWords)
+#tfidf = TfidfVectorizer(max_features=n_features, stop_words = stopWords)
+#countvec_train = np.array(countvec.fit_transform(X_train['description']).todense(), dtype=np.float16)
+
 #CountVectorizer(charset='koi8r', stop_words=stopWords)
 
-
-#count_vectorizer = CountVectorizer(stop_words='english')
-#count_train = count_vectorizer.fit_transform(X_train)
-#count_test = count_vectorizer.fit_transform(X_test)
-#tfidf_vectorizer = TfidfVectorizer(stop_words = 'english',max_df=0.7)
-#tfidf_vectorizer = TfidfTransformer(stop_words = 'english',max_df=0.7)
-#tfidf_train = tfidf_vectorizer.fit_transform(X_train)
-#tfidf_test = tfidf_vectorizer.fit_transform(X_test)
-#CountVectorizer(charset='koi8r', stop_words=stopWords)
-
-
-count_vectorizer = CountVectorizer()
+count_vectorizer = CountVectorizer(stop_words = stopWords)
 
 start_time = time.time()
 # create a xgboost model
 model = xgb.XGBRegressor(n_estimators=2, learning_rate=0.05, gamma=0, subsample=0.75, colsample_bytree=1, max_depth=3)
+
+import re
+import string
+re_tok = re.compile(r'([{string.punctuation}“”¨«»®´·º½¾¿¡§£₤‘’])')
+#re_tok = re.compile(r'([{string.punctuation}“”¨«»®´·!\:/()<>=+#[]{}|º½¾¿¡§£₤‘’])')
+def tokenize(s): return re_tok.sub(r'\1', s).split()
+#train['description'] = train['description'].apply(lambda comment: tokenize(comment))
 
 # calculate consistent numeric hashes for any categorical features 
 train['user_id'] = train.apply (lambda row: hash_column (row, 'user_id'),axis=1)
@@ -374,7 +371,7 @@ train['user_type'] = train.apply (lambda row: hash_column (row, 'user_type'),axi
 #train['description'] = train.apply (lambda row: hash_column (row, 'description'),axis=1)
 #train['description'].fillna(0)
 train['description'].fillna('Unknown')
-train['description'] = count_vectorizer.fit_transform(train['description'])
+#train['description'] = count_vectorizer.fit_transform(train['description'].apply(lambda comment: tokenize(comment)))
 train['price'] = np.log(train['price'] + 0.01)
 start_time = print_duration (start_time, "Finished reading")      
 
@@ -476,11 +473,7 @@ if __name__ == '__main__':
 '''
 
 
-
-
-
-'''
-print("++++++++++++++++++++++++++++++++++++++++++++++++++ lightGBM +++++++++++++++++++++++++++++++++++++++++++++++++++")
+#++++++++++++++++++++++++++++++++++++++++++++++++++ lightGBM +++++++++++++++++++++++++++++++++++++++++++++++++++")
 
 #https://www.kaggle.com/him4318/avito-lightgbm-with-ridge-feature-v-2-0/code
 
@@ -517,8 +510,6 @@ import matplotlib.pyplot as plt
 import re
 import string
 
-
-
 NFOLDS = 5
 SEED = 42
 VALID = True
@@ -535,8 +526,7 @@ class SklearnWrapper(object):
         return self.clf.predict(x)
 
 ##ridge = SklearnWrapper(clf=Ridge, seed = SEED, params = ridge_params)
-
-        
+   
 def get_oof(clf, x_train, y, x_test):
     oof_train = np.zeros((ntrain,))
     oof_test = np.zeros((ntest,))
@@ -555,7 +545,7 @@ def get_oof(clf, x_train, y, x_test):
 
     oof_test[:] = oof_test_skf.mean(axis=0)
     return oof_train.reshape(-1, 1), oof_test.reshape(-1, 1)
-    
+   
 def cleanName(text):
     try:
         textProc = text.lower()
@@ -575,11 +565,12 @@ def rmse(y, y0):
 
 
 print("\nData Load Stage")
-training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(2500)
+training = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv', index_col = "item_id", 
+parse_dates = ["activation_date"]).sample(2500)
 traindex = training.index
-testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", parse_dates = ["activation_date"]).sample(500)
+testing = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv', index_col = "item_id", 
+parse_dates = ["activation_date"]).sample(500)
 testdex = testing.index
-
 
 ntrain = training.shape[0]
 ntest = testing.shape[0]
@@ -590,19 +581,16 @@ print(ntest)
 kf = KFold(ntrain, n_folds=NFOLDS, shuffle=True, random_state=SEED)
 print(kf)
 
-
 y = training.deal_probability.copy()
 training.drop("deal_probability",axis=1, inplace=True)
 print('Train shape: {} Rows, {} Columns'.format(*training.shape))
 print('Test shape: {} Rows, {} Columns'.format(*testing.shape))
-
 
 print("Combine Train and Test")
 df = pd.concat([training,testing],axis=0)
 del training, testing
 gc.collect()
 print('\nAll Data shape: {} Rows, {} Columns'.format(*df.shape))
-
 
 print("Feature Engineering")
 df["price"] = np.log(df["price"]+0.001)
@@ -621,10 +609,9 @@ training_index = df.loc[df.activation_date<=pd.to_datetime('2017-04-07')].index
 validation_index = df.loc[df.activation_date>=pd.to_datetime('2017-04-08')].index
 df.drop(["activation_date","image"],axis=1,inplace=True)
 
-
 print(df.shape)
-print(df.head(2))
-print(df.dtypes)
+#print(df.head(2))
+#print(df.dtypes)
 
 print("\nEncode Variables")
 categorical = ["user_id","region","city","parent_category_name","category_name","user_type","image_top_1","param_1","param_2","param_3"]
@@ -640,8 +627,9 @@ for col in categorical:
 df.drop(["user_type","image_top_1","param_1","param_2","param_3","item_seq_number","image_top_1","Weekd of Year","Day of Month"],axis=1,inplace=True) # TERRENCE
 
 print("\nText Features")
-#print(df.shape)
-#print(df.head(2))
+print(df.shape)
+print(df.head(2))
+
 # Feature Engineering 
 
 # Meta Text Features
@@ -652,20 +640,18 @@ df['title'] = df['title'].apply(lambda x: cleanName(x))
 df["description"]   = df["description"].apply(lambda x: cleanName(x))
 
 print(df.shape)
-#print(df.head(2))
-
+print(df.head(2))
 
 for cols in textfeats:
     df[cols] = df[cols].astype(str) 
     df[cols] = df[cols].astype(str).fillna('missing') # FILL NA
     df[cols] = df[cols].str.lower() # Lowercase all text, so that capitalized words dont get treated differently
-    #df[cols + '_num_words'] = df[cols].apply(lambda comment: len(comment.split())) # Count number of Words
-    #df[cols + '_num_unique_words'] = df[cols].apply(lambda comment: len(set(w for w in comment.split())))
-    #df[cols + '_words_vs_unique'] = df[cols+'_num_unique_words'] / df[cols+'_num_words'] * 100 # Count Unique Words
+    df[cols + '_num_words'] = df[cols].apply(lambda comment: len(comment.split())) # Count number of Words
+    df[cols + '_num_unique_words'] = df[cols].apply(lambda comment: len(set(w for w in comment.split())))
+    df[cols + '_words_vs_unique'] = df[cols+'_num_unique_words'] / df[cols+'_num_words'] * 100 # Count Unique Words
 
 print(df.shape)    
 print(df.head(2))
-
 
 print("\n[TF-IDF] Term Frequency Inverse Document Frequency Stage")
 russian_stop = set(stopwords.words('russian'))
@@ -701,14 +687,12 @@ vectorizer = FeatureUnion([
     
 start_vect=time.time()
 
-
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 sys.setdefaultencoding('ascii')
 
 print(df.shape)
-
 
 #Fit my vectorizer on the entire dataset instead of the training rows
 #Score improved by .0001
@@ -718,7 +702,7 @@ vectorizer.fit(df)
 ready_df = vectorizer.transform(df.to_dict('records'))
 tfvocab = vectorizer.get_feature_names()
 print("Vectorization Runtime: %0.2f Minutes"%((time.time() - start_vect)/60))
-
+'''
 # Drop Text Cols
 textfeats = ["description", "title"]
 df.drop(textfeats, axis=1,inplace=True)
@@ -841,11 +825,9 @@ print("Notebook Runtime: %0.2f Minutes"%((time.time() - notebookstart)/60))
 
 '''
 
-
-
+#++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 '''
-#++++++++++++++++++++++++++++++++++++ image using keras VGG16 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #https://www.kaggle.com/classtag/extract-avito-image-features-via-keras-vgg16
 
 import numpy as np # linear algebra
@@ -944,6 +926,7 @@ img.show()
 '''
 
 #++++++++++++++++++++++++++++++++++++++++++++++++ image features +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'''
 #https://www.kaggle.com/sukhyun9673/extracting-image-features-test
 
 #Thanks to Nooh, who gave an inspiration of im KP extraction : https://www.kaggle.com/c/avito-demand-prediction/discussion/59414#348151
@@ -993,10 +976,6 @@ x = '856e74b8c46edcf0c0e23444eab019bfda63687bb70a3481955cc6ab86e39df2'
 print(keyp(x))
 
 
-
-
-
-'''
 images = test[["image"]].drop_duplicates().dropna()
 zipped = ZipFile('../input/test_jpg.zip')
 
@@ -1493,31 +1472,41 @@ submission.head()
 
 #https://www.kaggle.com/gunnvant/russian-word-embeddings-for-fun-and-for-profit
 
-'''
+
 import os
 import pandas as pd
 import numpy as np
 import glob
 import nltk
 import gensim
-
+'''
 train = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/train.csv').sample(2500)
 test = pd.read_csv('/home/terrence/CODING/Python/MODELS/AvitoData/test.csv').sample(500)
 
 print(train.head(2))
 
-from gensim.models import KeyedVectors
+#from gensim.models import KeyedVectors
 
 print("here we are")
 
-ru_model = KeyedVectors.load_word2vec_format('/home/terrence/CODING/Python/MODELS/AvitoData/wiki.ru.vec')
+import gensim
+#model = gensim.models.Word2Vec.load_word2vec_format('/home/terrence/CODING/Python/MODELS/AvitoData/wiki.ru.vec', binary=False)
+model = gensim.models.KeyedVectors.load_word2vec_format('/home/terrence/CODING/Python/MODELS/AvitoData/wiki.ru.vec', binary=False)
+#        gensim.models.KeyedVectors.load_word2vec_format
+# if you vector file is in binary format, change to binary=True
+#sentence = ["London", "is", "the", "capital", "of", "Great", "Britain"]
+#vectors = [model[w] for w in sentence]
 
-print("The size of vocabulary for this corpus is {}".format(len(ru_model.vocab)))
+find_similar_to = 'Автомобили'.lower()
+
+print(model.similar_by_word(find_similar_to))
+
+#ru_model = KeyedVectors.load_word2vec_format('/home/terrence/CODING/Python/MODELS/AvitoData/wiki.ru.vec')
+#print("The size of vocabulary for this corpus is {}".format(len(ru_model.vocab)))
 
 
 # Pick a word 
 find_similar_to = 'Автомобили'.lower()
-
 ru_model.similar_by_word(find_similar_to)
 
 import nltk
@@ -1939,7 +1928,7 @@ plot_importance(model)
 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++ Mwisho kabisa +++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+'''
 import pandas as pd
 import numpy as np
 import xgboost as xgb
@@ -2066,7 +2055,7 @@ print(X_train.shape)
 print(X_test.shape)
 
 #print(X_train.columns)
-
+'''
 
 
 '''
@@ -2107,7 +2096,7 @@ X_valid['image_top_1'] = (X_valid['image_top_1'] - image_top_1_mean) / image_top
 X_test['image_top_1'] = (X_test['image_top_1'] - image_top_1_mean) / image_top_1_std
 '''
 
-
+'''
 
 # I don't know why I need to fill NA a second time, but alas here we are...
 #X_train.fillna(0, inplace=True)
@@ -2222,7 +2211,7 @@ print(submission[submission['deal_probability'] > 0])
 submission.to_csv("xgb_mwisho_one.csv", index=False)
 #submission.to_csv("xgb_mwisho_trash.csv", index=False)
 
-
+'''
 
 '''
 catpred = cb_model.predict(test)
